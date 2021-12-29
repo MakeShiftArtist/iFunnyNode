@@ -1,4 +1,6 @@
+// @ts-check
 import Post from "./Post";
+import Client from "./Client.js";
 
 /**
  * iFunny Image Post Object with more specific functions for images
@@ -20,9 +22,9 @@ export default class Image extends Post {
 	 * @type {Promise<String|null>}
 	 */
 	get webp_url() {
-		return async () => {
+		return (async () => {
 			return (await this.get("url")).replace(/\.jpg$/g, ".webp");
-		};
+		})();
 	}
 
 	/**
