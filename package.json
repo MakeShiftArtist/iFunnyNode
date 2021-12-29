@@ -23,8 +23,7 @@
   "license": "Unlicense",
   "dependencies": {
     "axios": "^0.21.4",
-    "js-sha1": "^0.6.0",
-    "open": "^8.4.0"
+    "js-sha1": "^0.6.0"
   },
   "bugs": {
     "url": "https://github.com/MakeShiftArtist/iFunnyNode/issues"
