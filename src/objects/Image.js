@@ -1,7 +1,7 @@
 import Post from "./Post";
 
 /**
- * iFunny Image Object with more specific functions for images
+ * iFunny Image Post Object with more specific functions for images
  * @extends Post
  * @see {@link Image}
  */
@@ -17,31 +17,12 @@ export default class Image extends Post {
 
 	/**
 	 * Webp version of the content url
-	 * @type {Promise<String>}
+	 * @type {Promise<String|null>}
 	 */
 	get webp_url() {
-		return (async () => {
-			let type = await this.get("type");
-			return (await this.get(type))?.webp_url ?? null;
-		})();
-	}
-
-	/**
-	 * Dynamic title of the post\
-	 * Alias for {@link fixed_title Image.fixed_title}
-	 * @type {Promise<String>}
-	 */
-	get dynamic_title() {
-		return this.fixed_title;
-	}
-
-	/**
-	 * Fixed title of the Post
-	 * Alias for {@link dynamic_title Image.dynamic_title}
-	 * @type {Promise<String>}
-	 */
-	get fixed_title() {
-		return this.get("fixed_title", this.title);
+		return async () => {
+			return (await this.get("url")).replace(/\.jpg$/g, ".webp");
+		};
 	}
 
 	/**
@@ -63,5 +44,19 @@ export default class Image extends Post {
 	 */
 	get ocr_text() {
 		return this.detected_text;
+	}
+
+	/**
+	 * Content url with the iFunny watermark cropped out
+	 * @example
+	 * 'https://imageproxy.ifunny.co/crop:x-20/images/{content_id}.{jpg|webp}'
+	 * @type {Promise<String|null>}
+	 */
+	get cropped_url() {
+		return (async () => {
+			let content_id = await this.content_id;
+			if (content_id === null) return null;
+			return `https://imageproxy.ifunny.co/crop:x-20/images/${content_id}.jpg`;
+		})();
 	}
 }
