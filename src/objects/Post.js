@@ -17,7 +17,7 @@ export default class Post extends FreshObject {
 	 */
 	constructor(id, client, opts = {}) {
 		super(id, client, opts);
-		this.request_url = `${this.api}/content/${this.id_sync}`;
+		this.request_url = `/content/${this.id_sync}`;
 	}
 
 	/**
@@ -308,10 +308,53 @@ export default class Post extends FreshObject {
 	}
 
 	/**
-	 * Original Source of the content, if any
+	 * Original Source of the content, if any\
+	 * Not sure what the copywright object looks like, when I find out I will document it
 	 * @type {Promise<Object>}
 	 */
 	get copywright() {
 		return this.get("copyright", {});
+	}
+
+	/**
+	 * Dynamic title of the post\
+	 * Alias for {@link fixed_title Image.fixed_title}
+	 * @type {Promise<String>}
+	 */
+	get dynamic_title() {
+		return this.fixed_title;
+	}
+
+	/**
+	 * Fixed title of the Post
+	 * Alias for {@link dynamic_title Image.dynamic_title}
+	 * @type {Promise<String>}
+	 */
+	get fixed_title() {
+		return this.get("fixed_title", this.title);
+	}
+
+	/**
+	 * Thumbnail object with additional content urls
+	 * @type {Promise<Thumbnail>}
+	 */
+	get thumbnail() {
+		return this.get("thumb");
+	}
+
+	/**
+	 * The id for the post content url\
+	 * NOT the id of the post object itself
+	 * @type {Promise<String>}
+	 */
+	get content_id() {
+		return (async () => {
+			return (
+				// match the content id regex
+				(await this.url)?.match(
+					/(?<=\/images\/|\/videos\/)([a-zA-Z0-9\_]+)(?=\.jpg$|\.webp$|\.mp4$)/
+				)?.[0] ?? null // return the content id or null if undefined
+			);
+		})();
 	}
 }
