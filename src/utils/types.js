@@ -38,3 +38,24 @@
  * @property {Number} w Width
  * @property {Number} h Height
  */
+
+/**
+ * @typedef {Object} Thumbnail Watermark cropped at different sizes
+ * @property {String} small_url Jpeg format, Square, Size 65x, Quality: 90x75
+ * @property {String} url Jpeg format, Square, Size 160x, Quality: 90x75
+ * @property {String} large_url Jpeg format, Square, Size 320x, Quality: 90x75
+ * @property {String} x640_url Jpeg format, Size 640x Quality: 95x75
+ * @property {String} webp_url Webp format, Square, Size 160x, Quality: 90
+ * @property {String} large_webp_url Webp format, Square, Size 320x, Quality: 90
+ * @property {String} proportional_url Jpeg format, Size 320x, Crop x800, Quality: 90x75
+ * @property {String} proportional_webp_url Webp format, Size 320x, Crop, Quality: 90
+ * @property {Size} proportional_size Proportional Size of the thumbnail
+ */
+
+/**
+ * @typedef {Object} VideoClip
+ * @property {String} screen_url Jpeg format
+ * @property {Number} bytes Amount of bytes the video is
+ * @property {String} source_type The source type of the content
+ * @property {Number} duration How long the video is in seconds
+ */
