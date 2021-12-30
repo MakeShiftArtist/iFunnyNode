@@ -5,9 +5,9 @@ import Client from "./Client.js";
 /**
  * iFunny Image Post Object with more specific functions for images
  * @extends Post
- * @see {@link Image}
+ * @see {@link ImagePost}
  */
-export default class Image extends Post {
+export default class ImagePost extends Post {
 	/**
 	 * @param {String} id
 	 * @param {Client} client
