@@ -1,5 +1,5 @@
 // @ts-check
-import Post from "./Post";
+import Post from "./Post.js";
 import Client from "./Client.js";
 
 /**
