@@ -1,7 +1,45 @@
 // @ts-check
+"use strict";
+
 import Client from "./Client.js";
 import FreshObject from "./FreshObject.js";
 import User from "./User.js";
+
+/**
+ * @typedef {Object} PostOpts
+ * @property {Object} [data={}] The data received from the server
+ * @property {String} [url='/content/{content_id}'] The url to make requests to
+ */
+
+/**
+ * @typedef {Object} Thumbnail Watermark cropped at different sizes
+ * @property {String} small_url Jpeg format, Square, Size 65x, Quality: 90x75
+ * @property {String} url Jpeg format, Square, Size 160x, Quality: 90x75
+ * @property {String} large_url Jpeg format, Square, Size 320x, Quality: 90x75
+ * @property {String} x640_url Jpeg format, Size 640x Quality: 95x75
+ * @property {String} webp_url Webp format, Square, Size 160x, Quality: 90
+ * @property {String} large_webp_url Webp format, Square, Size 320x, Quality: 90
+ * @property {String} proportional_url Jpeg format, Size 320x, Crop x800, Quality: 90x75
+ * @property {String} proportional_webp_url Webp format, Size 320x, Crop, Quality: 90
+ * @property {Size} proportional_size Proportional Size of the thumbnail
+ */
+
+/**
+ * @typedef {Object} PostStats
+ * @property {Number=} smiles Amount of smiles the post has
+ * @property {Number=} unsmiles Amount of unsmiles the post has
+ * @property {Number=} guest_smiles Amount of guest smiles the post has
+ * @property {Number=} comments Amount of comments the post has
+ * @property {Number=} views Amount of views the post has
+ * @property {Number=} republished Amount of republishes the user has
+ * @property {Number=} shares Amount of shares the post has
+ */
+
+/**
+ * @typedef {Object} Size
+ * @property {Number} w Width
+ * @property {Number} h Height
+ */
 
 /**
  * Post Object, representing an iFunny Post of any type
@@ -13,7 +51,7 @@ export default class Post extends FreshObject {
 	 * @param {String} id Unique Post ID
 	 * @param {Client} client Client used for methods
 	 * @param {Object} [opts={}] Optional arguments
-	 * @param {FreshOpts} [opts.data={}] Payload of the data if already known
+	 * @param {PostOpts} [opts.data={}] Payload of the data if already known
 	 */
 	constructor(id, client, opts = {}) {
 		super(id, client, opts);
@@ -204,7 +242,7 @@ export default class Post extends FreshObject {
 	 * @see {@link PostStats}
 	 * @type {Promise<PostStats>}
 	 */
-	get nums() {
+	get stats() {
 		return this.get("nums", {});
 	}
 
@@ -214,7 +252,7 @@ export default class Post extends FreshObject {
 	 */
 	get smile_count() {
 		return (async () => {
-			return (await this.nums)?.smiles ?? 0;
+			return (await this.stats)?.smiles ?? 0;
 		})();
 	}
 
@@ -224,7 +262,7 @@ export default class Post extends FreshObject {
 	 */
 	get unsmile_count() {
 		return (async () => {
-			return (await this.nums)?.unsmiles ?? 0;
+			return (await this.stats)?.unsmiles ?? 0;
 		})();
 	}
 
@@ -235,7 +273,7 @@ export default class Post extends FreshObject {
 	 */
 	get guest_smiles() {
 		return (async () => {
-			return (await this.nums)?.guest_smiles ?? 0;
+			return (await this.stats)?.guest_smiles ?? 0;
 		})();
 	}
 
@@ -245,7 +283,7 @@ export default class Post extends FreshObject {
 	 */
 	get comment_count() {
 		return (async () => {
-			return (await this.nums)?.comments ?? 0;
+			return (await this.stats)?.comments ?? 0;
 		})();
 	}
 
@@ -255,7 +293,7 @@ export default class Post extends FreshObject {
 	 */
 	get view_count() {
 		return (async () => {
-			return (await this.nums)?.views ?? 0;
+			return (await this.stats)?.views ?? 0;
 		})();
 	}
 
@@ -265,7 +303,7 @@ export default class Post extends FreshObject {
 	 */
 	get republication_count() {
 		return (async () => {
-			return (await this.nums)?.republished ?? 0;
+			return (await this.stats)?.republished ?? 0;
 		})();
 	}
 
@@ -275,12 +313,13 @@ export default class Post extends FreshObject {
 	 */
 	get share_count() {
 		return (async () => {
-			return (await this.nums)?.shares;
+			return (await this.stats)?.shares;
 		})();
 	}
 
 	/**
 	 * Author of the post
+	 * Alias for {@link Post.creator}
 	 * @type {Promise<User>}
 	 */
 	get author() {
@@ -292,7 +331,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Author of the post\
-	 * Alias for {@link author Post.author}
+	 * Alias for {@link Post.author}
 	 * @type {Promise<User>}
 	 */
 	get creator() {
