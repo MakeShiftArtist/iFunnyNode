@@ -1,12 +1,50 @@
 // @ts-check
+"use strict";
+
 import Events from "events"; // allows for events like 'on_message'
 import { sleep } from "../utils/methods.js";
 import { CaptchaError } from "../utils/exceptions.js";
+import Ban from "./small/Ban.js";
 import axios from "axios";
 import { homedir } from "os";
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
 import User from "./User.js";
 import crypto from "crypto";
+
+/**
+ * @typedef {Object} ClientOpts
+ * @property {String} [user_agent] User agent to make requests with
+ * @property {String} [prefix] Prefix for the bot commands
+ * @property {String} [token] Bearer token for the bot to use if you have one stored
+ * @property {String} [id] id of the client to start with
+ */
+
+/**
+ * @typedef {Object} UserStats
+ * @property {Number} subscriptions Amount of subscriptions the user has
+ * @property {Number} subscribers Amount of subcribers the user has
+ * @property {Number} total_posts Amount of total posts the user has
+ * @property {Number} created Amount of created posts the user has
+ * @property {Number} featured Amount of features the user has
+ * @property {Number} total_smiles Amount of total smiles the user has
+ * @property {Number} achievements Amount of achievements the user has
+ */
+
+/**
+ * @typedef {Object} ProfilePicture
+ * @property {String} bg_color Background color of the profile picture
+ * @property {Object} thumb Thumbnail urls of the profile picture
+ * @property {String} thumb.small_url small url of the thumbnail 100x
+ * @property {String} thumb.medium_url medium url of the thumbnail 200x
+ * @property {String} thumb.large_url large url of the thumbnail 400x
+ * @property {String} url URL of the profile picture
+ */
+
+/**
+ * @typedef {Object} CoverImage
+ * @property {String} url URL of the cover image
+ * @property {String} bg_color Background color of the cover image
+ */
 
 /**
  * Client used for interacting with the API
@@ -55,6 +93,12 @@ export default class Client extends Events {
 		 * @type {Object}
 		 */
 		this._payload = {};
+
+		/**
+		 * Synchronous version of {@link Client.id}
+		 * @type {String}
+		 */
+		this.id_sync = opts.id || null;
 
 		/**
 		 * Url for this.get
@@ -335,7 +379,7 @@ export default class Client extends Events {
 		} catch (error) {
 			if (error.response.data.error === "captcha_required") {
 				throw new CaptchaError(error);
-			}
+			} else throw error?.response?.data ?? error;
 		}
 		this.instance.defaults.headers[
 			"Authorization"
@@ -349,8 +393,8 @@ export default class Client extends Events {
 			});
 
 			this._payload = response.data.data;
-			this._id = this._payload.id;
-			this._user = await this.user_by_id(response.data.data.id);
+			this.id_sync = this._payload.id;
+			this._user = await this.user;
 
 			this.emit("login", true);
 			return this;
@@ -432,7 +476,13 @@ export default class Client extends Events {
 	 * @type {Promise<String|null>}
 	 */
 	get id() {
-		return this.get("id");
+		return (async () => {
+			let user_id = await this.get("id", this.id_sync);
+			if (user_id !== this.id_sync) {
+				this.id_sync = user_id;
+			}
+			return this.id_sync;
+		})();
 	}
 
 	/**
@@ -463,7 +513,8 @@ export default class Client extends Events {
 	}
 
 	/**
-	 * The Client's about (bio)
+	 * The Client's about
+	 * Alias for {@link bio Client.bio}
 	 * @type {Promise<String>}
 	 */
 	get about() {
@@ -472,7 +523,7 @@ export default class Client extends Events {
 
 	/**
 	 * The Client's bio
-	 * Alias for `this.about`
+	 * Alias for {@link about Client.about}
 	 * @type {Promise<String>}
 	 */
 	get bio() {
@@ -480,48 +531,39 @@ export default class Client extends Events {
 	}
 
 	/**
-	 * The Client's account link that can be opened in iFunny
+	 * The Client's account link that can be opened in iFunny\
+	 * Alias for {@link web_url Client.web_url}
 	 * @type {Promise<String>}
 	 */
 	get link() {
-		return this.get("web_url", `https://ifunny.co/user/${this.nick}`);
+		return this.web_url;
 	}
 
 	/**
-	 * The Client's profile picture url
-	 * @type {Promise<String|null>}
+	 * The Client's account link that can be opened in iFunny\
+	 * Alias for {@link link Client.link}
+	 * @type {Promise<String>}
+	 */
+	get web_url() {
+		return this.get("web_url");
+	}
+
+	/**
+	 * The Client's profile picture
+	 * @type {Promise<ProfilePicture>}
 	 */
 	get profile_picture() {
-		return (async () => {
-			let photo = await this.get("photo");
-			return photo?.url ?? null;
-		})();
-	}
-
-	/**
-	 * The Client's profile picture background color
-	 * @type {Promise<String|null>}
-	 */
-	get profile_picture_color() {
-		return (async () => {
-			return (await this.get("photo"))?.bg_color ?? null;
-		})();
+		return this.get("photo");
 	}
 
 	/**
 	 * The Client's cover image url
-	 * @type {Promise<String|null>}
+	 * @type {Promise<CoverImage>}
 	 */
 	get cover_image() {
-		return this.get("cover_url");
-	}
-
-	/**
-	 * The Client's cover image background color (hex code)
-	 * @type {Promise<String|null>}
-	 */
-	get cover_image_color() {
-		return this.get("cover_bg_color");
+		return (async () => {
+			return (await this.user).cover_image;
+		})();
 	}
 
 	/**
@@ -587,7 +629,7 @@ export default class Client extends Events {
 	}
 
 	/**
-	 * Is the Client User's an iFunny team member?
+	 * Is the Client an iFunny team member?
 	 * @type {Promise<Boolean>}
 	 */
 	get is_staff() {
@@ -660,81 +702,10 @@ export default class Client extends Events {
 
 	/**
 	 * Current bans attached to Client
-	 * @type {Promise<Object>}
+	 * @type {Promise<Ban[]>}
 	 */
 	get bans() {
-		return this.get("bans", {});
-	}
-
-	/**
-	 * The Client's Meme Experience
-	 * @type {Promise<Object|null>}
-	 */
-	get meme_experience() {
-		return this.get("meme_experience");
-	}
-
-	/**
-	 * The Client's total days using the app
-	 * @type {Promise<Number>}
-	 */
-	get days() {
-		return (async () => {
-			return (await this.meme_experience)?.days ?? 0;
-		})();
-	}
-
-	/**
-	 * The Client's Meme Experience rank
-	 * @type {Promise<String|null>}
-	 */
-	get rank() {
-		return (async () => {
-			return (await this.meme_experience)?.rank ?? null;
-		})();
-	}
-
-	/**
-	 * The Client's Meme Experience image url
-	 * @type {Promise<String|null>}
-	 */
-	get badge_url() {
-		return (async () => {
-			return (await this.meme_experience)?.badge_url ?? null;
-		})();
-	}
-
-	/**
-	 * The Client's Meme Experience image size
-	 * @type {Promise<Object|null>}
-	 */
-	get badge_size() {
-		return (async () => {
-			(await this.meme_experience)?.badge_size ?? null;
-		})();
-	}
-
-	/**
-	 * Total amount of days the Client needs for the next rank
-	 * @type {Promise<Number|null>}
-	 */
-	get next_rank_days() {
-		return (async () => {
-			return (await this.meme_experience)?.next_milestone ?? null;
-		})();
-	}
-
-	/**
-	 * Days untill the Client gets the next rank
-	 * @type {Promise<Number|null>}
-	 */
-	get days_till_next_rank() {
-		return (async () => {
-			if (!(await this.next_rank_days)) {
-				return null;
-			}
-			return (await this.next_rank_days) - (await this.days);
-		})();
+		return this.get("bans", []);
 	}
 
 	/**
@@ -742,7 +713,7 @@ export default class Client extends Events {
 	 * Don't get this data directly, use the getter for them
 	 * @type {Promise<UserStats|null>}
 	 */
-	get nums() {
+	get stats() {
 		return this.get("num");
 	}
 
@@ -752,7 +723,7 @@ export default class Client extends Events {
 	 */
 	get subscription_count() {
 		return (async () => {
-			return (await this.nums)?.subscriptions ?? 0;
+			return (await this.stats)?.subscriptions ?? 0;
 		})();
 	}
 
@@ -762,7 +733,7 @@ export default class Client extends Events {
 	 */
 	get subscriber_count() {
 		return (async () => {
-			return (await this.nums)?.subcribers ?? 0;
+			return (await this.stats)?.subscribers ?? 0;
 		})();
 	}
 
@@ -772,7 +743,7 @@ export default class Client extends Events {
 	 */
 	get post_count() {
 		return (async () => {
-			return (await this.nums)?.total_posts ?? 0;
+			return (await this.stats)?.total_posts ?? 0;
 		})();
 	}
 
@@ -783,7 +754,7 @@ export default class Client extends Events {
 	 */
 	get created_count() {
 		return (async () => {
-			return (await this.nums)?.created ?? 0;
+			return (await this.stats)?.created ?? 0;
 		})();
 	}
 
@@ -797,7 +768,7 @@ export default class Client extends Events {
 	}
 
 	/**
-	 * Amount of posts on the clients counts that are republishes
+	 * Amount of posts on the clients account that are republishes
 	 * Not original
 	 * @type {Promise<Number>}
 	 */
@@ -813,7 +784,7 @@ export default class Client extends Events {
 	 */
 	get feature_count() {
 		return (async () => {
-			return (await this.nums)?.featured ?? 0;
+			return (await this.stats)?.featured ?? 0;
 		})();
 	}
 
@@ -823,7 +794,7 @@ export default class Client extends Events {
 	 */
 	get smile_count() {
 		return (async () => {
-			return (await this.nums)?.total_smiles ?? 0;
+			return (await this.stats)?.total_smiles ?? 0;
 		})();
 	}
 
@@ -833,7 +804,7 @@ export default class Client extends Events {
 	 */
 	get achievement_count() {
 		return (async () => {
-			return (await this.nums)?.achievements ?? 0;
+			return (await this.stats)?.achievements ?? 0;
 		})();
 	}
 
