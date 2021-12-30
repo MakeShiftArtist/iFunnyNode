@@ -1,39 +1,39 @@
 {
-  "name": "ifunnynode",
-  "type": "module",
-  "version": "1.2.0",
-  "description": "Api wrapper for IFunny.mobi in Node.js",
-  "main": ".src/index.js",
-  "scripts": {
-    "test": "mocha --recursive --parallel"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/MakeShiftArtist/iFunnyNode.git"
-  },
-  "keywords": [
-    "iFunny",
-    "API",
-    "Wrapper"
-  ],
-  "author": "MakeShiftArtist <MakeShiftServices@gmail.com> (https://github.com/makeshiftartist)",
-  "contributors": [
-    "Eva <mail@gastrodon.io> (https://github.com/gastrodon)"
-  ],
-  "license": "Unlicense",
-  "dependencies": {
-    "axios": "^0.21.4",
-    "js-sha1": "^0.6.0"
-  },
-  "bugs": {
-    "url": "https://github.com/MakeShiftArtist/iFunnyNode/issues"
-  },
-  "homepage": "https://github.com/MakeShiftArtist/iFunnyNode#readme",
-  "devDependencies": {
-    "chai": "^4.3.4",
-    "mocha": "^9.1.2"
-  },
-  "directories": {
-    "test": "test"
-  }
+	"name": "ifunnynode",
+	"type": "module",
+	"version": "1.2.0",
+	"description": "Api wrapper for IFunny.mobi in Node.js",
+	"main": "./src/index.js",
+	"scripts": {
+		"test": "mocha --recursive --parallel"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/MakeShiftArtist/iFunnyNode.git"
+	},
+	"keywords": [
+		"iFunny",
+		"API",
+		"Wrapper"
+	],
+	"author": "MakeShiftArtist <MakeShiftServices@gmail.com> (https://github.com/makeshiftartist)",
+	"contributors": [
+		"Eva <mail@gastrodon.io> (https://github.com/gastrodon)"
+	],
+	"license": "Unlicense",
+	"dependencies": {
+		"axios": "^0.21.4",
+		"js-sha1": "^0.6.0"
+	},
+	"bugs": {
+		"url": "https://github.com/MakeShiftArtist/iFunnyNode/issues"
+	},
+	"homepage": "https://github.com/MakeShiftArtist/iFunnyNode#readme",
+	"devDependencies": {
+		"chai": "^4.3.4",
+		"mocha": "^9.1.2"
+	},
+	"directories": {
+		"test": "test"
+	}
 }
