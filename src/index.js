@@ -1,3 +1,1 @@
-module.exports = {
-  Client: require('./objects/Client.js')
-}
+export * from "./objects/index";
