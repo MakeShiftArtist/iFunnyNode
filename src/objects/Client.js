@@ -705,7 +705,14 @@ export default class Client extends Events {
 	 * @type {Promise<Ban[]>}
 	 */
 	get bans() {
-		return this.get("bans", []);
+		return (async () => {
+			/** @type {Object[]} */
+			let banArray = await this.get("bans", []);
+			banArray.forEach((ele, index, arr) => {
+				arr[index] = new Ban(ele, this);
+			});
+			return banArray;
+		})();
 	}
 
 	/**
