@@ -1,6 +1,14 @@
 // @ts-check
+"use strict";
+
 import Events from "events"; // allows for events like 'on_message'
 import Client from "./Client.js";
+
+/**
+ * @typedef {Object} FreshOpts
+ * @property {Object} [data={}] The data received from the server
+ * @property {String} [url='/account'] The url to make requests to
+ */
 
 /**
  * Base object that all other objects will inherit
@@ -51,12 +59,16 @@ export default class FreshObject extends Events {
 		 */
 		this._update = false;
 
+		/**
+		 * Shortcut for {@link Client.instance}
+		 * @type {import('axios').AxiosInstance}
+		 */
 		this.instance = this.client.instance;
 	}
 
 	/**
 	 * Get value from cached response
-	 * @param {string} key  Key to query
+	 * @param {String} key  Key to query
 	 * @param {*} fallback  Default value if no value is found
 	 * @return {Promise<*>}  Retrieved data
 	 */

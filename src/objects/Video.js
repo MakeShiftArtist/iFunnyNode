@@ -3,6 +3,20 @@ import Post from "./Post.js";
 import Client from "./Client.js";
 
 /**
+ * @typedef {Object} VideoClip
+ * @property {String} screen_url Jpeg format
+ * @property {Number} bytes Amount of bytes the video is
+ * @property {String} source_type The source type of the content
+ * @property {Number} duration How long the video is in seconds
+ */
+
+/**
+ * @typedef {Object} PostOpts
+ * @property {Object} [data={}] The data received from the server
+ * @property {String} [url='/content/{content_id}'] The url to make requests to
+ */
+
+/**
  * iFunny Video Post Object with more specfic functions for videos
  * @see {@link VideoPost}
  */
@@ -10,7 +24,7 @@ export default class VideoPost extends Post {
 	/**
 	 * @param {String} id Id of the video
 	 * @param {Client} client
-	 * @param {FreshOpts} opts
+	 * @param {PostOpts} opts
 	 */
 	constructor(id, client, opts) {
 		super(id, client, opts);

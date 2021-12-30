@@ -3,6 +3,12 @@ import Post from "./Post.js";
 import Client from "./Client.js";
 
 /**
+ * @typedef {Object} PostOpts
+ * @property {Object} [data={}] The data received from the server
+ * @property {String} [url='/content/{content_id}'] The url to make requests to
+ */
+
+/**
  * iFunny Image Post Object with more specific functions for images
  * @extends Post
  * @see {@link ImagePost}
@@ -11,7 +17,7 @@ export default class ImagePost extends Post {
 	/**
 	 * @param {String} id
 	 * @param {Client} client
-	 * @param {FreshOpts} opts
+	 * @param {PostOpts} opts
 	 */
 	constructor(id, client, opts = {}) {
 		super(id, client, opts);
