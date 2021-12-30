@@ -1,14 +1,63 @@
 // @ts-check
+"use strict";
+
 import FreshObject from "./FreshObject.js";
 import axios from "axios";
 import Client from "./Client.js";
+import Ban from "./small/Ban.js";
+
+/**
+ * @typedef {Object} UserStats
+ * @property {Number} subscriptions Amount of subscriptions the user has
+ * @property {Number} subscribers Amount of subcribers the user has
+ * @property {Number} total_posts Amount of total posts the user has
+ * @property {Number} created Amount of created posts the user has
+ * @property {Number} featured Amount of features the user has
+ * @property {Number} total_smiles Amount of total smiles the user has
+ * @property {Number} achievements Amount of achievements the user has
+ */
+
+/**
+ * @typedef {Object} ProfilePicture
+ * @property {String} bg_color Background color of the profile picture
+ * @property {Object} thumb Thumbnail urls of the profile picture
+ * @property {String} thumb.small_url small url of the thumbnail 100x
+ * @property {String} thumb.medium_url medium url of the thumbnail 200x
+ * @property {String} thumb.large_url large url of the thumbnail 400x
+ * @property {String} url URL of the profile picture
+ */
+
+/**
+ * @typedef {Object} CoverImage
+ * @property {String} url URL of the cover image
+ * @property {String} bg_color Background color of the cover image
+ */
+
+/**
+ * @typedef {Object} MemeExperience
+ * @property {Number} days Amount of days the user has
+ * @property {String} rank The rank of the user
+ * @property {Badge} badge The badge the user's rank
+ * @property {Number} next_milestone Amount of days the user needs to get the next rank
+ */
+
+/**
+ * @typedef {Object} Size
+ * @property {Number} w Width
+ * @property {Number} h Height
+ */
+/**
+ * @typedef {Object} Badge
+ * @property {String} url URL of the badge
+ * @property {Size} size Size of the badge
+ */
 
 export default class User extends FreshObject {
 	/**
 	 * User Object
-	 * @param {string} id id of the user
-	 * @param {Client} client client used to get the user
-	 * @param {object} [opts={}] optional data
+	 * @param {string} id Id of the user
+	 * @param {Client} client Client the user is attached to
+	 * @param {object} [opts={}] Optional data
 	 */
 	constructor(id, client, opts = {}) {
 		super(id, client, opts);
@@ -100,7 +149,7 @@ export default class User extends FreshObject {
 	}
 
 	/**
-	 * Is the client subscribed to user notificationss
+	 * Is the client subscribed to user notifications?
 	 * @type {Promise<Boolean>}
 	 */
 	get subscribed_to_updates() {
@@ -109,29 +158,31 @@ export default class User extends FreshObject {
 
 	/**
 	 * Get the cover image of this user
-	 * @type {Promise<Object>}
+	 * @type {Promise<CoverImage>}
 	 */
 	get cover_image() {
 		return (async () => {
 			return {
 				url: await this.get("cover_url"),
-				backgroud: await this.get("cover_bg_color"),
+				bg_color: await this.get("cover_bg_color", "FFFFFF"),
 			};
 		})();
 	}
 
 	/**
 	 * The user's profile photo
-	 * @type {Promise<object>}
+	 * @type {Promise<ProfilePicture>}
 	 */
 	get profile_photo() {
-		return (async () => {
-			let photo = await this.get("photo");
-			return {
-				url: photo.url,
-				backgroud: photo.bg_color,
-			};
-		})();
+		return this.get("photo");
+	}
+
+	/**
+	 * The user's account stats
+	 * @type {Promise<UserStats>}
+	 */
+	get stats() {
+		return this.get("num");
 	}
 
 	/**
@@ -140,7 +191,7 @@ export default class User extends FreshObject {
 	 */
 	get subscriber_count() {
 		return (async () => {
-			return await this.get("num").then((num) => num.subscribers);
+			return (await this.stats)?.subscribers ?? 0;
 		})();
 	}
 
@@ -150,7 +201,7 @@ export default class User extends FreshObject {
 	 */
 	get subscription_count() {
 		return (async () => {
-			return await this.get("num").then((num) => num.subscriptions);
+			return (await this.stats)?.subscriptions;
 		})();
 	}
 
@@ -160,7 +211,7 @@ export default class User extends FreshObject {
 	 */
 	get post_count() {
 		return (async () => {
-			return await this.get("num").then((num) => num.total_posts);
+			return (await this.stats)?.total_posts;
 		})();
 	}
 
@@ -170,7 +221,7 @@ export default class User extends FreshObject {
 	 */
 	get original_post_count() {
 		return (async () => {
-			return await this.get("num").then((num) => num.created);
+			return (await this.stats)?.created;
 		})();
 	}
 
@@ -190,7 +241,7 @@ export default class User extends FreshObject {
 	 */
 	get feature_count() {
 		return (async () => {
-			return (await this.get("num"))?.featured ?? 0;
+			return (await this.stats)?.featured ?? 0;
 		})();
 	}
 
@@ -200,7 +251,7 @@ export default class User extends FreshObject {
 	 */
 	get smile_count() {
 		return (async () => {
-			return (await this.get("num")).then((num) => num.total_smiles);
+			return (await this.stats)?.total_smiles;
 		})();
 	}
 
@@ -210,33 +261,56 @@ export default class User extends FreshObject {
 	 */
 	get achievement_count() {
 		return (async () => {
-			return await this.get("num").then((num) => num.achievements);
+			return (await this.stats)?.achievements;
 		})();
 	}
 
 	/**
 	 * All bans the user has, including shadow bans
-	 * @type {Promise<Array>}
+	 * @type {Promise<Ban[]>}
 	 */
 	get bans() {
-		return this.get("bans", []);
+		return (async () => {
+			/** @type {Object[]} */
+			let banArray = await this.get("bans", []);
+			banArray.forEach((ele, index, arr) => {
+				arr[index] = new Ban(ele, this.client);
+			});
+			return banArray;
+		})();
 	}
 
 	/**
 	 * User's meme experience calculated by age of the account
-	 * @type {Promise<Object>}
+	 * @type {Promise<MemeExperience>}
 	 */
 	get meme_experience() {
-		return this.get("meme_experience");
+		return (async () => {
+			let xp = await this.get("meme_experience", {});
+			return {
+				days: xp?.days ?? 0,
+				next_milestone: xp?.next_milestone ?? null,
+				rank: xp?.rank ?? "Meme Explorer",
+				badge: {
+					url:
+						xp?.badge_url ??
+						"https://img.ifunny.co/meme_experience/0.png",
+					size: xp?.badge_size ?? {
+						w: 0,
+						h: 0,
+					},
+				},
+			};
+		})();
 	}
 
 	/**
 	 * The user's iFunny rank
-	 * @type {Promise<string>}
+	 * @type {Promise<String>}
 	 */
 	get rank() {
 		return (async () => {
-			return await this.get("meme_experience").then((xp) => xp.rank);
+			return (await this.meme_experience).rank;
 		})();
 	}
 
@@ -246,31 +320,27 @@ export default class User extends FreshObject {
 	 */
 	get days() {
 		return (async () => {
-			return await this.get("meme_experience").then((xp) => xp.days);
+			return (await this.meme_experience).days;
 		})();
 	}
 
 	/**
-	 * The user's iFunny next rank day requirement
+	 * How many days the user needs to get the next rank
 	 * @type {Promise<Number|null>}
 	 */
-	get next_days() {
+	get next_milestone() {
 		return (async () => {
-			return (await this.get("meme_experience"))?.next_milestone || null;
+			return (await this.meme_experience).next_milestone;
 		})();
 	}
 
 	/**
 	 * The user's iFunny badge
-	 * @type {Promise<Object>}
+	 * @type {Promise<Badge>}
 	 */
-	get rank_badge() {
+	get badge() {
 		return (async () => {
-			let xp = await this.meme_experience;
-			return {
-				url: xp.badge_url,
-				size: xp.badge_size,
-			};
+			return (await this.meme_experience).badge;
 		})();
 	}
 
@@ -296,15 +366,21 @@ export default class User extends FreshObject {
 	 * @type {Promise<String>}
 	 */
 	get link() {
-		return this.get("web_url");
+		return this.web_url;
 	}
 
 	/**
 	 * The user's iFunny account link, which can be opened in iFunny\
+	 * Alias for {@link web_url User.link}
 	 * @type {Promise<String>}
 	 */
 	get web_url() {
-		return this.link;
+		return (async () => {
+			return await this.get(
+				"web_url",
+				`https://ifunny.co/user/${await this.nick}`
+			);
+		})();
 	}
 
 	/**
@@ -325,7 +401,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * The user's about (bio)
-	 * @type {Promise<string>}
+	 * @type {Promise<String>}
 	 */
 	get about() {
 		return this.get("about", "");
@@ -333,7 +409,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Alias for this.about
-	 * @type {Promise<string>}
+	 * @type {Promise<String>}
 	 */
 	get bio() {
 		return this.get("about", "");
@@ -384,12 +460,12 @@ export default class User extends FreshObject {
 	 * @type {Promise<String>}
 	 */
 	get original_nick() {
-		return this.get("original_nick", this.get("nick"));
+		return this.get("original_nick", this.nick);
 	}
 
 	/**
 	 * The user's nickname color
-	 * @type {Promise<string>}
+	 * @type {Promise<String>}
 	 */
 	get nick_color() {
 		return this.get("nick_color", "A3A3A5");
@@ -411,7 +487,6 @@ export default class User extends FreshObject {
 
 	/**
 	 * Unsubscribes to the user
-	 *
 	 * @return {Promise<Object>} Status of the response
 	 */
 	async unsubscribe() {
