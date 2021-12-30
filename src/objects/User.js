@@ -2,7 +2,6 @@
 "use strict";
 
 import FreshObject from "./FreshObject.js";
-import axios from "axios";
 import Client from "./Client.js";
 import Ban from "./small/Ban.js";
 
@@ -76,10 +75,9 @@ export default class User extends FreshObject {
 
 		try {
 			let headers = await this.headers;
-			let response = await axios({
+			let response = await this.instance.request({
 				method: "GET",
-				url: this.api + "/users/" + id,
-				headers: await this.headers,
+				url: `/users/${id}`,
 			});
 
 			return new User(response.data.data.id, this.client, {
@@ -108,10 +106,9 @@ export default class User extends FreshObject {
 			throw new TypeError("nick must be a string");
 		}
 		try {
-			let response = await axios({
+			let response = await this.instance.request({
 				method: "GET",
-				url: `${this.client.api}/users/by_nick/${nick}`,
-				headers: await this.headers,
+				url: `/users/by_nick/${nick}`,
 			});
 
 			return new User(response.data.data.id, this.client, {
@@ -477,10 +474,9 @@ export default class User extends FreshObject {
 	 * @return {Promise<Object>} - Status of the response
 	 */
 	async subscribe() {
-		let response = await axios({
+		let response = await this.instance.request({
 			method: "PUT",
-			url: this.url + "/subscribers",
-			headers: await this.headers,
+			url: "/subscribers",
 		});
 		return response.data;
 	}
@@ -490,10 +486,9 @@ export default class User extends FreshObject {
 	 * @return {Promise<Object>} Status of the response
 	 */
 	async unsubscribe() {
-		let response = await axios({
+		let response = await this.instance.request({
 			method: "DELETE",
-			url: this.url + "/subscribers",
-			headers: await this.headers,
+			url: "/subscribers",
 		});
 		return response.data;
 	}
