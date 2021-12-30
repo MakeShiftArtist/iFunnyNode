@@ -4,9 +4,9 @@ import Client from "./Client.js";
 
 /**
  * iFunny Video Post Object with more specfic functions for videos
- * @see {@link Video}
+ * @see {@link VideoPost}
  */
-export default class Video extends Post {
+export default class VideoPost extends Post {
 	/**
 	 * @param {String} id Id of the video
 	 * @param {Client} client
