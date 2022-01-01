@@ -1,24 +1,21 @@
-const methods = require("../../../src/utils/methods.js");
+import { capitalize } from "../../../src/utils/methods.js";
 
-const { assert, expect } = require("chai");
+import { assert, expect } from "chai";
 
 describe(
-  "capitalize",
-  it(
-    "capitalizes leading letter characters",
-    () => {
-      const cases = [
-        ["uppercase", "Uppercase"],
-        ["Uppercase", "Uppercase"],
-        ["-lowercase", "-lowercase"],
-        [" lowercase", " lowercase"],
-      ];
+	"capitalize",
+	it("capitalizes leading letter characters", () => {
+		const cases = [
+			["uppercase", "Uppercase"],
+			["Uppercase", "Uppercase"],
+			["-lowercase", "-lowercase"],
+			[" lowercase", " lowercase"],
+		];
 
-      for (const it of cases) {
-        assert.equal(methods.capitalize(it[0]), it[1]);
-      }
+		for (const it of cases) {
+			assert.equal(capitalize(it[0]), it[1]);
+		}
 
-      assert.equal(1, 1);
-    },
-  ),
+		assert.equal(1, 1);
+	})
 );
