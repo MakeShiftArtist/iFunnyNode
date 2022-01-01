@@ -23,6 +23,9 @@ import Client from "ifunnynode";
 // initalize client with bearer token
 const client = new Client({ token: "bearer_token" });
 
+// Logging doesn't need any args because we already have the token
+client.login();
+
 // Almost every getter is async so you have to await them
 (async () => {
 	console.log(await client.feature_count);
