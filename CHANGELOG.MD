@@ -26,3 +26,10 @@ Initial commit
 -   Fixed Documentation
 -   BREAKING: Changed `Client.login` to one take one argument `opts` with `opts.email`, `opts.password`, and `opts.force`.\
     If you initalized the Client with `js new Client({token: 'bearer'})` you can now just login with `Client.login()`
+
+### 1.3.2
+
+-   Fixed `npm test`
+-   Fixed `Client.login`
+-   Added `create_basic_token` test
+-   Fixed Documentation for README.md
