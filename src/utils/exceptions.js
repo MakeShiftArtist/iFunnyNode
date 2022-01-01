@@ -2,7 +2,6 @@
  * Default API error for unknown errors
  * @extends Error
  */
-
 export class ApiError extends Error {
 	/**
 	 * @constructor
@@ -45,7 +44,7 @@ export class ApiError extends Error {
 		 * Descript of the error given
 		 * @type {String}
 		 */
-		this.description = this.data.description;
+		this.description = this.data.error_description;
 	}
 }
 
@@ -56,7 +55,6 @@ export class ApiError extends Error {
  */
 export class CaptchaError extends ApiError {
 	/**
-	 * @constructor
 	 * @param {Error} error
 	 */
 	constructor(error) {
@@ -69,7 +67,22 @@ export class CaptchaError extends ApiError {
 	}
 }
 
+/**
+ * Auth error when the client creates too many bearers using the same basic too quickly
+ * Construct a new basic token to bypass
+ * @extends ApiError
+ */
+export class AuthError extends ApiError {
+	/**
+	 * @param {Error} error Error throw by Axios
+	 */
+	constructor(error) {
+		super(error, "too_many_user_auths");
+	}
+}
+
 export default {
 	ApiError,
 	CaptchaError,
+	AuthError,
 };
