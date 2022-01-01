@@ -1,25 +1,28 @@
-let Client = require("../../../src/objects/Client.js");
-let Endpoints = require("../../../src/utils/endpoints.js");
+import Client from "../../../src/objects/Client.js";
+import Endpoints from "../../../src/utils/endpoints.js";
 
-let { expect } = require("chai");
+import { expect } from "chai";
+beforeEach(function () {
+	console.log(this.currentTest.title);
+});
 
 describe(
-  "client",
-  it("api", async () => {
-    expect(await (new Client()).api).to.equal(Endpoints.base);
-  }),
-  it("headers", async () => {
-    let client = new Client();
-    const headers = await client.headers;
+	"client",
+	it("api", async () => {
+		expect(new Client().api).to.equal(Endpoints.base);
+	}),
+	it("headers", async () => {
+		let client = new Client();
+		let headers = client.headers;
 
-    expect(headers["Authorization"]).to.equal(
-      "Basic " + await client.basic_token,
-    );
+		expect(headers["Authorization"]).to.equal(
+			"Basic " + client.basic_token
+		);
 
-    expect(headers["User-Agent"]).to.equal(client._user_agent);
-    expect(headers["User-Agent"]).to.be.ok;
-  }),
-  it("config", async () => {
-    expect(await (new Client()).config).to.be.ok;
-  }),
+		expect(headers["User-Agent"]).to.equal(client._user_agent);
+		expect(headers["User-Agent"]).to.be.ok;
+	}),
+	it("config", async () => {
+		expect(new Client().config).to.be.ok;
+	})
 );
