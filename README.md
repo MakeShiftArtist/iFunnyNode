@@ -2,7 +2,7 @@
 
 This is an iFunny API Wrapper written in ES6 Node JS.\
 This is in the early stages so most of the API hasn't been implemented yet.\
-Chats will eventually be added, but I'm currently focusing on the rest of the API.
+Chats will eventually be added, but I'm currently focusing on the rest of the API.\
 **VERY EARLY STAGES**
 
 -   I'm writing this wrapper from scratch, taking inspiration from
@@ -55,8 +55,6 @@ const client = new Client();
 client.on("login", async (new_bearer) => {
 	// Get a user by nickname
 	let user = await client.user_by_nick("iFunnyChef");
-	// or
-	// let user = (await client.user).by_nick("iFunnyChef");
 
 	// Subscribe to the user
 	let response = await user.subscribe();
@@ -67,21 +65,20 @@ client.on("login", async (new_bearer) => {
 	} else {
 		console.log("Failed to subscribe");
 	}
-
-	let taz = new User();
 });
 
 (async () => {
 	try {
 		// emits 'login' with `true` if it's a new bearer
 		// or `false` if it had one in the config file
-		await client.login(IFUNNY_EMAIL, IFUNNY_PASSWORD);
+		await client.login({
+			email: IFUNNY_EMAIL,
+			password: IFUNNY_PASSWORD,
+		});
 	} catch (err) {
 		// check if error was CaptchaError
 		if (err.captcha_url) {
-			// Log the captcha url so you can open it
-			console.log(captcha_url.blue);
-			// You could use the npm package `open` to open the url as well
+			console.log(captcha_url);
 		} else {
 			// NOT a CaptchaError
 			throw err;
