@@ -3,7 +3,7 @@
 
 import Events from "events"; // allows for events like 'on_message'
 import { sleep } from "../utils/methods.js";
-import { ApiError, CaptchaError } from "../utils/exceptions.js";
+import { ApiError, CaptchaError, AuthError } from "../utils/exceptions.js";
 import Ban from "./small/Ban.js";
 import axios from "axios";
 import { homedir } from "os";
@@ -267,10 +267,10 @@ export default class Client extends Events {
 	 * @type {String}
 	 */
 	get basic_token() {
-		if (this.config.basic_token) {
+		if (this.config.basic_token && !this._update) {
 			return this.config.basic_token;
 		}
-
+		// TODO Make sure basic tokens are only used for auths 3 times per token
 		let uuid = crypto.randomUUID().replace(/\-/g, "");
 		let hex = crypto
 			.createHash("sha256")
@@ -284,7 +284,7 @@ export default class Client extends Events {
 
 		this._config = Object.assign({ basic_token: auth }, this.config);
 		this.config = this._config;
-
+		this._update = false;
 		return auth;
 	}
 
@@ -347,14 +347,16 @@ export default class Client extends Events {
 			throw new Error("No stored token, password is required");
 		}
 
-		let data = Object.keys({
+		let info = {
 			grant_type: "password",
 			username: opts.email,
 			password: opts.password,
-		})
-			.map((key) => `${key}=${data[key]}`)
-			.join("&");
+		};
 
+		let data = Object.keys(info)
+			.map((key) => `${key}=${info[key]}`)
+			.join("&");
+		if (this.config.basic_auth_count >= 3) this.fresh.basic_token;
 		try {
 			let response = await this.instance.request({
 				method: "POST",
@@ -370,14 +372,16 @@ export default class Client extends Events {
 				throw new Error("access_token not given");
 				//console.log(response.data);
 			}
-
+			this._config.basic_auth_count += 1;
 			this._token = response.data.access_token;
 			this._config[`bearer ${opts.email}`] = response.data.access_token;
 			this.config = this._config;
 		} catch (error) {
 			if (error.response.data.error === "captcha_required") {
 				throw new CaptchaError(error);
-			} else throw error?.response?.data ?? error;
+			} else if (error.response.data.error === "too_many_user_auths") {
+				throw new AuthError(error);
+			}
 		}
 		this.instance.defaults.headers[
 			"Authorization"
