@@ -2,9 +2,8 @@ import Client from "../../../src/objects/Client.js";
 
 import { expect } from "chai";
 
-describe(
-	"client",
-	it("constructs", () => {
+describe("client", async () => {
+	it("constructs with correct opts", () => {
 		const it = new Client({
 			prefix: "-",
 			token: "foobar",
@@ -14,5 +13,5 @@ describe(
 		expect(it.prefix).to.equal("-");
 		expect(it._token).to.equal("foobar");
 		expect(it._user_agent).to.equal("spam");
-	})
-);
+	});
+});
