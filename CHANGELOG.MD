@@ -33,4 +33,4 @@ Initial commit
 -   Fixed `Client.login`
 -   Added `create_basic_token` test
 -   Fixed Documentation for README.md
--   Added `AuthError` class
+-   Added `AuthErro` class
