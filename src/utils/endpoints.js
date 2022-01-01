@@ -1,7 +1,7 @@
 /**
  * Used for reference until I come up with a better way to use these
  */
-const Endpoints = {
+export default {
 	base: "https://api.ifunny.mobi/v4",
 	account: "/account",
 	revoke: "/oauth2/revoke",
@@ -44,5 +44,3 @@ const Endpoints = {
 	isNickAvailable: "/users/nicks_available",
 	isEmailAvailable: "/users/emails_available",
 };
-
-export default Endpoints;
