@@ -3,7 +3,7 @@
 
 import Events from "events"; // allows for events like 'on_message'
 import { sleep } from "../utils/methods.js";
-import { CaptchaError } from "../utils/exceptions.js";
+import { ApiError, CaptchaError } from "../utils/exceptions.js";
 import Ban from "./small/Ban.js";
 import axios from "axios";
 import { homedir } from "os";
@@ -16,7 +16,6 @@ import crypto from "crypto";
  * @property {String} [user_agent] User agent to make requests with
  * @property {String} [prefix] Prefix for the bot commands
  * @property {String} [token] Bearer token for the bot to use if you have one stored
- * @property {String} [id] id of the client to start with
  */
 
 /**
@@ -95,17 +94,18 @@ export default class Client extends Events {
 		this._payload = {};
 
 		/**
-		 * Synchronous version of {@link Client.id}
-		 * @type {String}
+		 * Client's cached user object
+		 * @private
+		 * @type {User}
 		 */
-		this.id_sync = opts.id || null;
+		this._user = null;
 
 		/**
 		 * Url for this.get
 		 * Only change if you know what you're doing
 		 * @type {String}
 		 */
-		this.url = `/account`;
+		this.request_url = `/account`;
 
 		// optional property defaults
 
@@ -152,6 +152,7 @@ export default class Client extends Events {
 			this.instance.defaults.headers[
 				"Authorization"
 			] = `Bearer ${this._token}`;
+			this.authorized = true; // Assumes valid bearer token
 		}
 
 		// Make sure that our config file exists and use it
@@ -182,21 +183,12 @@ export default class Client extends Events {
 		}
 
 		this._update = false;
-		this.instance
-			.request({
-				url: this.url,
-				headers: this._token
-					? `Bearer ${this._token}`
-					: `Basic ${this.basic_token}`,
-			})
-			.then((response) => {
-				this._payload = response.data.data;
-				return this._payload[key] || fallback;
-			})
-			.catch((error) => {
-				console.log(`Error getting data from getter ${key}`);
-				console.log(error);
-			});
+
+		let response = await this.instance.request({
+			url: this.request_url,
+		});
+		this._payload = response.data.data;
+		return this._payload[key] ?? fallback;
 	}
 
 	/**
@@ -213,7 +205,6 @@ export default class Client extends Events {
 
 	/**
 	 * This objects config, loaded from and written to a json file
-	 * @type {Object}
 	 */
 	get config() {
 		if (!this._config) {
@@ -297,74 +288,81 @@ export default class Client extends Events {
 		return auth;
 	}
 
+	/**
+	 * Update's the Client's account payload for getters.\
+	 * Can await this if you want to see the full object details
+	 * @private
+	 * @returns {Promise<Object>} The Client's payload
+	 * @throws {@link ApiError}
+	 */
+	async _update_payload() {
+		try {
+			let response = await this.instance.request({
+				url: this.request_url,
+			});
+			this._payload = response.data.data;
+			if (this.user?.id_sync == null) {
+				this._user = new User(this.id_sync, this);
+			}
+			return this._payload;
+		} catch (error) {
+			let data = error.response.data;
+			if (data.error === "invalid_grant") {
+				throw new ApiError(error, data.error_description);
+			} else throw error.response;
+		}
+	}
+
 	// ? Captcha needs to be solved to login for the first time
 	/**
-	 * @async Logs the Client in
-	 * @param {String} email Email of the Client to log in with
-	 * @param {String} [password] Password to log in with, required if no bearer is stored
-	 * @param {Object} [opts={force: false}] Force log in with email and password, creating a new bearer token. NOT RECOMMENDED
+	 * Logs the Client in
+	 * @param {Object} [opts] Optional params for logging in
+	 * @param {String} [opts.email] Email of the Client to log in with
+	 * @param {String} [opts.password] Password to log in with, required if no bearer is stored
+	 * @param {Boolean} [opts.force=false] Force log in with email and password
 	 * @return {Promise<Client>} Itself after the login completes
 	 * @throws {@link CaptchaError}
 	 */
-	async login(email, password, opts = { force: false }) {
-		if (!email) {
-			throw new Error("email is required to login");
+	async login(opts = { force: false }) {
+		if (this._token && !opts.force) {
+			await this._update_payload();
+			this.authorized = true;
+		}
+		if (!opts.email) {
+			throw new Error("email is required to login without a token");
 		}
 
-		let config = this.config;
-
-		if (config[`bearer ${email}`] && !opts.force) {
-			this._token = config[`bearer ${email}`];
-
-			try {
-				this.instance.defaults.headers[
-					"Authorization"
-				] = `Bearer ${this._token}`;
-				let response = await this.instance.request({
-					url: "/account",
-				});
-
-				this.authorized = true;
-				this._payload = response.data.data;
-				this._id = this._payload.id;
-				this.emit("login", false);
-				return this;
-			} catch (error) {
-				let data = error.response.data;
-				if (data.error == "invalid_grant") {
-					throw new Error(data.error_description);
-				}
-				this.instance.defaults.headers[
-					"Authorization"
-				] = `Basic ${this.basic_token}`;
-				this._token = null;
-			}
+		if (this.config[`bearer ${opts.email}`] && !opts.force) {
+			this._token = this.config[`bearer ${opts.email}`];
+			this.instance.defaults.headers[
+				"Authorization"
+			] = `Bearer ${this._token}`;
+			await this._update_payload();
+			this.authorized = true;
+			this.emit("login", false);
+			return this;
 		}
 
-		if (!password) {
+		if (!opts.password) {
 			throw new Error("No stored token, password is required");
 		}
 
-		let info = {
+		let data = Object.keys({
 			grant_type: "password",
-			username: email,
-			password: password,
-		};
-
-		let data = Object.keys(info)
-			.map((key) => `${key}=${info[key]}`)
+			username: opts.email,
+			password: opts.password,
+		})
+			.map((key) => `${key}=${data[key]}`)
 			.join("&");
-
-		let headers = {
-			"content-type": "application/x-www-form-urlencoded",
-			...this.headers,
-		};
 
 		try {
 			let response = await this.instance.request({
 				method: "POST",
 				url: `/oauth2/token`,
-				headers: headers,
+				headers: {
+					"content-type": "application/x-www-form-urlencoded",
+					...this.headers,
+				},
 				data: data,
 			});
 
@@ -374,7 +372,7 @@ export default class Client extends Events {
 			}
 
 			this._token = response.data.access_token;
-			this._config[`bearer ${email}`] = response.data.access_token;
+			this._config[`bearer ${opts.email}`] = response.data.access_token;
 			this.config = this._config;
 		} catch (error) {
 			if (error.response.data.error === "captcha_required") {
@@ -387,38 +385,22 @@ export default class Client extends Events {
 
 		await sleep(5); // Primes bearer
 
-		try {
-			let response = await this.instance.request({
-				url: `/account`,
-			});
-
-			this._payload = response.data.data;
-			this.id_sync = this._payload.id;
-			this._user = await this.user;
-
-			this.emit("login", true);
-			return this;
-		} catch (error) {
-			console.log("error after bearer");
-			throw error;
-		}
+		await this._update_payload();
+		this.emit("login", true);
+		return this;
 	}
 
 	/**
 	 * The Client's User object
-	 * Just use data in the Client object
-	 * @type {Promise<User>}
+	 * @type {User}
 	 */
 	get user() {
-		return (async () => {
-			if (this._user && !this._update) {
-				this._update = false;
-				return this._user;
-			}
-			this._user = new User(await this.id, this);
-			this._update = false;
+		if (this._user && !this._update) {
 			return this._user;
-		})();
+		}
+		this._user = new User(this.id_sync, this);
+		this._update = false;
+		return this._user;
 	}
 
 	/**
@@ -431,7 +413,7 @@ export default class Client extends Events {
 		if (typeof id !== "string") {
 			throw new TypeError("id must be a string");
 		}
-		return (await this.user).by_id(id);
+		return await this.user.by_id(id);
 	}
 
 	/**
@@ -444,7 +426,7 @@ export default class Client extends Events {
 		if (typeof nick !== "string") {
 			throw new TypeError("nick must be a string");
 		}
-		return (await this.user).by_nick(nick);
+		return await this.user.by_nick(nick);
 	}
 
 	/**
@@ -476,13 +458,16 @@ export default class Client extends Events {
 	 * @type {Promise<String|null>}
 	 */
 	get id() {
-		return (async () => {
-			let user_id = await this.get("id", this.id_sync);
-			if (user_id !== this.id_sync) {
-				this.id_sync = user_id;
-			}
-			return this.id_sync;
-		})();
+		return this.get("id", this.id_sync);
+	}
+
+	/**
+	 * Synchronous version of {@link Client.id}\
+	 * Will return `null` if the Client hsan't made any async requests
+	 * @type {String|null}
+	 */
+	get id_sync() {
+		return this._payload?.id ?? null;
 	}
 
 	/**
@@ -817,7 +802,7 @@ export default class Client extends Events {
 
 	/**
 	 * Rating of the User (No longer used by iFunny)
-	 * I'm not adding the getters for this since it's been redacted
+	 * I'm not adding the getters for this since it's been deprecated
 	 * @type {Promise<Object|null>}
 	 */
 	get rating() {
