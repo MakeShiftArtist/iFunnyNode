@@ -98,7 +98,7 @@ export default class Client extends Events {
 		 * @private
 		 * @type {User}
 		 */
-		this._user = null;
+		this._user = new User(null, this, { url: this.request_url });
 
 		/**
 		 * Url for this.get
@@ -125,12 +125,6 @@ export default class Client extends Events {
 		this.prefix = opts.prefix || null;
 
 		/**
-		 * Bearer token if stored in cache
-		 * @type {String|null}
-		 */
-		this._token = opts.token || null;
-
-		/**
 		 * Instance of axios with headers
 		 * @type {import('axios').AxiosInstance}
 		 */
@@ -147,13 +141,25 @@ export default class Client extends Events {
 			},
 		});
 
-		// Changes auth to bearer if one is stored
-		if (this._token) {
+		// Checks opts.token to see if it's a valid bearer token
+		if (opts.token) {
+			if (
+				!opts.token.match(/^[a-z0-9]{64}$/g) ||
+				opts.token.length !== 64
+			) {
+				throw new Error(`Invalid bearer token: ${opts.token}`);
+			}
 			this.instance.defaults.headers[
 				"Authorization"
-			] = `Bearer ${this._token}`;
+			] = `Bearer ${opts.token}`;
 			this.authorized = true; // Assumes valid bearer token
 		}
+
+		/**
+		 * Bearer token if stored in cache
+		 * @type {String|null}
+		 */
+		this._token = opts.token || null;
 
 		// Make sure that our config file exists and use it
 		if (!existsSync(`${homedir()}/.ifunnynode`)) {
@@ -168,12 +174,18 @@ export default class Client extends Events {
 	}
 
 	/**
-	 * Get value from cached response
-	 * @param {string} key Key to query
+	 * Get value from cache or update cache
+	 * @param {String} key Key to query
 	 * @param {*} [fallback=null] Fallback value if no value is found (default's to null)
 	 * @return {Promise<*>} Retrieved data from key or fallback
+	 * @throws `Error`
 	 */
 	async get(key, fallback = null) {
+		// Checks authorization before attempting a request
+		if (!this.authorized) {
+			throw new Error(`Client not authorized\nToken: ${this.bearer}`);
+		}
+
 		let value = this._payload[key];
 
 		// if the key was was cached and we don't care about updated data
@@ -187,7 +199,12 @@ export default class Client extends Events {
 		let response = await this.instance.request({
 			url: this.request_url,
 		});
+
+		// Update client cache
 		this._payload = response.data.data;
+		// Update client.user cache
+		this._user._payload = this._payload;
+
 		return this._payload[key] ?? fallback;
 	}
 
@@ -205,6 +222,7 @@ export default class Client extends Events {
 
 	/**
 	 * This objects config, loaded from and written to a json file
+	 * @type {Object}
 	 */
 	get config() {
 		if (!this._config) {
@@ -222,7 +240,6 @@ export default class Client extends Events {
 	/**
 	 * Update this clients config
 	 * and write it to the config file
-	 * @type {Object}
 	 */
 	set config(value) {
 		if (typeof value !== "object") {
@@ -230,6 +247,35 @@ export default class Client extends Events {
 		}
 		this._config = value;
 		writeFileSync(this._config_path, JSON.stringify(value, null, 2));
+	}
+
+	/**
+	 * Bearer token for this client
+	 * @type {String|null}
+	 */
+	get bearer() {
+		return this._token;
+	}
+
+	/**
+	 * Sets the client's token and updates this.authorized
+	 */
+	set bearer(value) {
+		if (value === null) {
+			this.authorized = false;
+			this._token = value;
+			return;
+		}
+		if (typeof value !== "string") {
+			throw new TypeError(`Token must be a String, not ${typeof value}`);
+		}
+		if (!value.match(/^[a-z0-9]%/) || value.length !== 64) {
+			throw new Error(`Invalid bearer token: ${value}`);
+		}
+		this.instance.defaults.headers["Authorization"] = `Bearer ${value}`;
+
+		this.authorized = true; // Assumes valid bearer token
+		this._token = value;
 	}
 
 	/**
@@ -246,8 +292,8 @@ export default class Client extends Events {
 	 * @type {Object}
 	 */
 	get headers() {
-		let auth = this._token ? this._token : this.basic_token;
-		let type = this._token ? "Bearer " : "Basic ";
+		let auth = this.bearer || this.basic_token;
+		let type = this.authorized ? "Bearer " : "Basic ";
 		return {
 			"Ifunny-Project-Id": "iFunny",
 			"User-Agent": this._user_agent,
@@ -294,16 +340,21 @@ export default class Client extends Events {
 	 * @private
 	 * @returns {Promise<Object>} The Client's payload
 	 * @throws {@link ApiError}
+	 * @throws `Error`
 	 */
 	async _update_payload() {
+		if (!this.authorized || !this.bearer) {
+			throw new Error(`Client not authorized\nToken: ${this.bearer}`);
+		}
 		try {
 			let response = await this.instance.request({
 				url: this.request_url,
 			});
 			this._payload = response.data.data;
-			if (this.user?.id_sync == null) {
-				this._user = new User(this.id_sync, this);
-			}
+			this._user = new User(this.id_sync, this, {
+				data: this._payload,
+				url: this.request_url,
+			});
 			return this._payload;
 		} catch (error) {
 			let data = error.response.data;
@@ -324,7 +375,7 @@ export default class Client extends Events {
 	 * @throws {@link CaptchaError}
 	 */
 	async login(opts = { force: false }) {
-		if (this._token && !opts.force) {
+		if (this.bearer && !opts.force) {
 			await this._update_payload();
 			this.authorized = true;
 		}
@@ -333,12 +384,8 @@ export default class Client extends Events {
 		}
 
 		if (this.config[`bearer ${opts.email}`] && !opts.force) {
-			this._token = this.config[`bearer ${opts.email}`];
-			this.instance.defaults.headers[
-				"Authorization"
-			] = `Bearer ${this._token}`;
+			this.bearer = this.config[`bearer ${opts.email}`];
 			await this._update_payload();
-			this.authorized = true;
 			this.emit("login", false);
 			return this;
 		}
@@ -356,14 +403,14 @@ export default class Client extends Events {
 		let data = Object.keys(info)
 			.map((key) => `${key}=${info[key]}`)
 			.join("&");
-		if (this.config.basic_auth_count >= 3) this.fresh.basic_token;
+
 		try {
 			let response = await this.instance.request({
 				method: "POST",
 				url: `/oauth2/token`,
 				headers: {
-					"content-type": "application/x-www-form-urlencoded",
 					...this.headers,
+					"content-type": "application/x-www-form-urlencoded",
 				},
 				data: data,
 			});
@@ -372,9 +419,8 @@ export default class Client extends Events {
 				throw new Error("access_token not given");
 				//console.log(response.data);
 			}
-			this._config.basic_auth_count += 1;
-			this._token = response.data.access_token;
-			this._config[`bearer ${opts.email}`] = response.data.access_token;
+			this.bearer = response.data.access_token;
+			this._config[`bearer ${opts.email}`] = this.bearer;
 			this.config = this._config;
 		} catch (error) {
 			if (error.response.data.error === "captcha_required") {
@@ -383,28 +429,12 @@ export default class Client extends Events {
 				throw new AuthError(error);
 			}
 		}
-		this.instance.defaults.headers[
-			"Authorization"
-		] = `Bearer ${this._token}`;
 
 		await sleep(5); // Primes bearer
 
 		await this._update_payload();
 		this.emit("login", true);
 		return this;
-	}
-
-	/**
-	 * The Client's User object
-	 * @type {User}
-	 */
-	get user() {
-		if (this._user && !this._update) {
-			return this._user;
-		}
-		this._user = new User(this.id_sync, this);
-		this._update = false;
-		return this._user;
 	}
 
 	/**
@@ -431,6 +461,24 @@ export default class Client extends Events {
 			throw new TypeError("nick must be a string");
 		}
 		return await this.user.by_nick(nick);
+	}
+
+	/**
+	 * The Client's User object
+	 * @type {User}
+	 */
+	get user() {
+		if (!!this._user.id_sync && !this._update) {
+			return this._user;
+		}
+		this._user = new User(this.id_sync, this, {
+			data: this._payload,
+			url: this.request_url,
+		});
+		if (this._update) this._user._update = true;
+		this._update = false;
+
+		return this._user;
 	}
 
 	/**
@@ -550,9 +598,7 @@ export default class Client extends Events {
 	 * @type {Promise<CoverImage>}
 	 */
 	get cover_image() {
-		return (async () => {
-			return (await this.user).cover_image;
-		})();
+		return this.user.cover_image;
 	}
 
 	/**
@@ -678,7 +724,7 @@ export default class Client extends Events {
 	 * @type {Promise<Boolean>}
 	 */
 	get is_banned() {
-		return this.get("is_benned");
+		return this.get("is_banned");
 	}
 
 	/**
@@ -696,11 +742,8 @@ export default class Client extends Events {
 	get bans() {
 		return (async () => {
 			/** @type {Object[]} */
-			let banArray = await this.get("bans", []);
-			banArray.forEach((ele, index, arr) => {
-				arr[index] = new Ban(ele, this);
-			});
-			return banArray;
+			let bans = await this.get("bans", []);
+			return bans.map((data) => new Ban(data.id, this, { data }));
 		})();
 	}
 
