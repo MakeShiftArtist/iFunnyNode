@@ -21,7 +21,7 @@ export default class FreshObject extends Events {
 	 */
 	constructor(id, client, opts = {}) {
 		super();
-		if (typeof id !== "string" || id !== null) {
+		if (typeof id !== "string" && id !== null) {
 			throw new TypeError("id must be a string");
 		}
 
