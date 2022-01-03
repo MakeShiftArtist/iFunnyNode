@@ -21,14 +21,13 @@ export default class FreshObject extends Events {
 	 */
 	constructor(id, client, opts = {}) {
 		super();
-		if (typeof id !== "string") {
-			console.log(id);
+		if (typeof id !== "string" || id !== null) {
 			throw new TypeError("id must be a string");
 		}
 
 		/**
 		 * Id of the object
-		 * @type {String}
+		 * @type {String|null}
 		 */
 		this.id_sync = id;
 
