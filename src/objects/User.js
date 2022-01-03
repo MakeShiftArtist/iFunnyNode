@@ -41,14 +41,17 @@ import Ban from "./small/Ban.js";
  */
 
 /**
- * @typedef {Object} Size
- * @property {Number} w Width
- * @property {Number} h Height
- */
-/**
  * @typedef {Object} Badge
  * @property {String} url URL of the badge
- * @property {Size} size Size of the badge
+ * @property {Object} size Size of the badge
+ * @property {Number} size.w Width of the badge
+ * @property {Number} size.h Height of the badge
+ */
+
+/**
+ * @typedef {Object} FreshOpts
+ * @property {Object} [data={}] The data received from the server
+ * @property {String} [url] The url to make requests to
  */
 
 export default class User extends FreshObject {
@@ -56,11 +59,11 @@ export default class User extends FreshObject {
 	 * User Object
 	 * @param {string} id Id of the user
 	 * @param {Client} client Client the user is attached to
-	 * @param {object} [opts={}] Optional data
+	 * @param {FreshOpts} [opts={}] Optional data
 	 */
 	constructor(id, client, opts = {}) {
 		super(id, client, opts);
-		this.url = `${this.api}/users/${id}`;
+		this.request_url = opts.url || `${this.api}/users/${id}`;
 	}
 
 	/**
@@ -73,21 +76,28 @@ export default class User extends FreshObject {
 			throw new TypeError("id must be a string");
 		}
 
+		if (id === this.id_sync) {
+			if (this._update) {
+				return new User(this.id_sync, this.client, {
+					url: this.request_url,
+				});
+			} else return this;
+		}
+
 		try {
-			let headers = await this.headers;
-			let response = await this.instance.request({
+			let { data } = await this.instance.request({
 				method: "GET",
 				url: `/users/${id}`,
 			});
 
-			return new User(response.data.data.id, this.client, {
-				data: response.data.data,
+			return new User(data.data.id, this.client, {
+				data: data.data,
 			});
 		} catch (err) {
+			let error = err?.response?.data;
 			if (
-				(err.response && err.response.data.error === "not_found") ||
-				err.response.data.error === "user_is_unavailable" ||
-				err.response.data.error_description === "Invalid user id"
+				["not_found", "user_is_unavailable"].includes(error.error) ||
+				error.error_description === "Invalid user id"
 			) {
 				return null;
 			}
@@ -104,6 +114,12 @@ export default class User extends FreshObject {
 	async by_nick(nick) {
 		if (typeof nick !== "string") {
 			throw new TypeError("nick must be a string");
+		}
+
+		if (nick.toLowerCase() === (await this.nick).toLowerCase()) {
+			return new User(this.id_sync, this.client, {
+				url: this.request_url,
+			});
 		}
 		try {
 			let response = await this.instance.request({
@@ -139,8 +155,6 @@ export default class User extends FreshObject {
 	 */
 	get id() {
 		return (async () => {
-			let id = await this.get("id");
-			if (id !== this.id_sync) this.id_sync = id;
 			return this.id_sync;
 		})();
 	}
@@ -269,11 +283,8 @@ export default class User extends FreshObject {
 	get bans() {
 		return (async () => {
 			/** @type {Object[]} */
-			let banArray = await this.get("bans", []);
-			banArray.forEach((ele, index, arr) => {
-				arr[index] = new Ban(ele, this.client);
-			});
-			return banArray;
+			let bans = await this.get("bans", []);
+			return bans.map((data) => new Ban(data.id, this.client, { data }));
 		})();
 	}
 
