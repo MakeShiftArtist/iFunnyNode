@@ -55,6 +55,18 @@ export default class Post extends FreshObject {
 	 */
 	constructor(id, client, opts = {}) {
 		super(id, client, opts);
+		/**
+		 * Cached post author
+		 * @type {User}
+		 */
+		this._user = new User(id, client, {
+			data: this._payload["creator"] ?? {},
+		});
+
+		/**
+		 * Request url for `this.get` method
+		 * @type {String}
+		 */
 		this.request_url = `/content/${this.id_sync}`;
 	}
 
@@ -142,26 +154,32 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Creation date in UNIX
-	 * @type {Promise<Number>}
+	 * @type {Promise<Date>}
 	 */
 	get created_at() {
-		return this.get("date_create");
+		return (async () => {
+			return new Date(await this.get("create_at"));
+		})();
 	}
 
 	/**
 	 * Publish date in UNIX
-	 * @type {Promise<Number>}
+	 * @type {Promise<Date>}
 	 */
 	get published_at() {
-		return this.get("publish_at");
+		return (async () => {
+			return new Date(await this.get("publish_at"));
+		})();
 	}
 
 	/**
-	 * Featured date in UNIX (if featured)
-	 * @type {Promise<Number>}
+	 * Featured date (if Featured)
+	 * @type {Promise<Date>}
 	 */
 	get issue_at() {
-		return this.get("issue_at");
+		return (async () => {
+			return new Date(await this.get("issue_at"));
+		})();
 	}
 
 	/**
@@ -324,8 +342,13 @@ export default class Post extends FreshObject {
 	 */
 	get author() {
 		return (async () => {
+			if (this._user.id_sync !== null && !this._update) {
+				return this._user;
+			}
 			let creator = await this.get("creator");
-			return new User(creator.id, this.client, { data: creator });
+			this._user = new User(creator.id ?? null, this.client, {
+				data: creator ?? {},
+			});
 		})();
 	}
 
