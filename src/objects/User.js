@@ -155,6 +155,10 @@ export default class User extends FreshObject {
 	 */
 	get id() {
 		return (async () => {
+			let new_id = await this.get("id");
+			if (this.id_sync !== new_id) {
+				this.id_sync = new_id;
+			}
 			return this.id_sync;
 		})();
 	}
