@@ -95,7 +95,7 @@ export default class FreshObject extends Events {
 	 * @example
 	 * this.foo // cached value
 	 * this.fresh.foo // new value
-	 * @return {FreshObject} itself with this._update set to true
+	 * @return {FreshObject|any} itself with this._update set to true
 	 */
 	get fresh() {
 		this._update = true;

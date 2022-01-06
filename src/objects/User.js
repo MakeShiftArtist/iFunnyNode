@@ -486,25 +486,26 @@ export default class User extends FreshObject {
 
 	/**
 	 * Subscribes to the user
-	 * @return {Promise<Object>} - Status of the response
+	 * @return {Promise<User>} This instance
 	 */
 	async subscribe() {
-		let response = await this.instance.request({
+		await this.instance.request({
 			method: "PUT",
 			url: "/subscribers",
 		});
-		return response.data;
+
+		return this.fresh;
 	}
 
 	/**
 	 * Unsubscribes to the user
-	 * @return {Promise<Object>} Status of the response
+	 * @return {Promise<User>} This instance
 	 */
 	async unsubscribe() {
-		let response = await this.instance.request({
+		await this.instance.request({
 			method: "DELETE",
 			url: "/subscribers",
 		});
-		return response.data;
+		return this.fresh;
 	}
 }
