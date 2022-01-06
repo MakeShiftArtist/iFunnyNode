@@ -27,7 +27,12 @@ export function sleep(seconds) {
  * @returns {String} The basic auth token
  */
 export function create_basic_token() {
-	let hex = crypto.randomBytes(32).toString("hex").toUpperCase();
+	let uuid = crypto.randomUUID().replace(/\-/g, "");
+	let hex = crypto
+		.createHash("sha256")
+		.update(uuid)
+		.digest("hex")
+		.toUpperCase();
 	let a = hex + "_MsOIJ39Q28:";
 	let b = hex + ":MsOIJ39Q28:PTDc3H8a)Vi=UYap";
 	let c = crypto.createHash("sha1").update(b).digest("hex");
