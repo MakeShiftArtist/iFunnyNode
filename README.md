@@ -23,7 +23,7 @@ import Client from "ifunnynode";
 // initalize client with bearer token
 const client = new Client({ token: "bearer_token" });
 
-// Logging doesn't need any args because we already have the token
+// Logging in doesn't need any args because we already have the token
 client.login();
 
 // Almost every getter is async so you have to await them
@@ -43,7 +43,7 @@ iFunny will sometimes return a captcha error, so you'll need to solve them
     2. Attempt to login in again with the same credentials
 3. You're done!
 
-**EXAMPLE**
+### Example
 
 ```js
 // imports the client and the User and Post Object.
@@ -60,14 +60,11 @@ client.on("login", async (new_bearer) => {
 	let user = await client.user_by_nick("iFunnyChef");
 
 	// Subscribe to the user
-	let response = await user.subscribe();
-
-	// Check status code of response
-	if (response.status === 200) {
-		console.log(`Subscribed to: ${await user.nick}`);
-	} else {
-		console.log("Failed to subscribe");
-	}
+	await user.subscribe();
+	console.log(`Subscribed to ${user.nick}`);
+	// Unsubscribe from the user
+	await user.unsubscribe();
+	console.log(`Unsubscribed from ${user.nick}`);
 });
 
 (async () => {
