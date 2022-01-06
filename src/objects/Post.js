@@ -158,27 +158,30 @@ export default class Post extends FreshObject {
 	 */
 	get created_at() {
 		return (async () => {
-			return new Date(await this.get("create_at"));
+			let time = await this.get("created_at");
+			return time ? new Date(time) : null;
 		})();
 	}
 
 	/**
-	 * Publish date in UNIX
-	 * @type {Promise<Date>}
+	 * Publish date if it was already published
+	 * @type {Promise<Date|null>}
 	 */
 	get published_at() {
 		return (async () => {
-			return new Date(await this.get("publish_at"));
+			let published = (await this.get("state")) === "published";
+			return published ? new Date(await this.get("published_at")) : null;
 		})();
 	}
 
 	/**
-	 * Featured date (if Featured)
-	 * @type {Promise<Date>}
+	 * Featured date if it was featured
+	 * @type {Promise<Date|null>}
 	 */
 	get issue_at() {
 		return (async () => {
-			return new Date(await this.get("issue_at"));
+			let featured = await this.get("is_featured");
+			return featured ? new Date(await this.get("issue_at")) : null;
 		})();
 	}
 
@@ -417,6 +420,18 @@ export default class Post extends FreshObject {
 					/(?<=\/images\/|\/videos\/)([a-zA-Z0-9\_]+)(?=\.jpg$|\.webp$|\.mp4$)/
 				)?.[0] ?? null // return the content id or null if undefined
 			);
+		})();
+	}
+
+	/**
+	 * Return the original source of the post if it is a republish\
+	 * If it's not a republish, it returns itself
+	 * @type {Promise<Post>}
+	 */
+	get source() {
+		return (async () => {
+			let origin = await this.get("source");
+			return origin ? new Post(origin.id, this.client, origin) : this;
 		})();
 	}
 }
