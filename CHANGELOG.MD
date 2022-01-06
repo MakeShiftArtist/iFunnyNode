@@ -34,3 +34,10 @@ Initial commit
 -   Added `create_basic_token` test
 -   Fixed Documentation for README.md
 -   Added `AuthError` class
+
+### 1.3.3
+
+-   Refactored User and Client classes
+-   Timestamps return dates instead of the time in UNIX
+-   `User.subscribe` and `User.unsubscribe` now return the same instance of the User
+-   Fixed config getting reset or broken when runnning tests
