@@ -15,6 +15,8 @@ beforeEach(async () => {
 		skip = true;
 	}
 
+	client.config = config;
+
 	try {
 		await client.login({
 			email: EMAIL,

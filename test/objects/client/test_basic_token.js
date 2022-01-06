@@ -2,6 +2,15 @@ import Client from "../../../src/objects/Client.js";
 
 import { expect } from "chai";
 
+const client = new Client();
+const config = client.config;
+
+beforeEach(() => {
+	client.config = config;
+});
+after(() => {
+	client.config = config;
+});
 describe("client basic token", async () => {
 	it("can be generated", async () => {
 		const it = new Client();
