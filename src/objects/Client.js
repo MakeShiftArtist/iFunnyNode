@@ -269,7 +269,7 @@ export default class Client extends Events {
 		if (typeof value !== "string") {
 			throw new TypeError(`Token must be a String, not ${typeof value}`);
 		}
-		if (!value.match(/^[a-z0-9]%/) || value.length !== 64) {
+		if (!value.match(/^[a-z0-9]{64}$/g) || value.length !== 64) {
 			throw new Error(`Invalid bearer token: ${value}`);
 		}
 		this.instance.defaults.headers["Authorization"] = `Bearer ${value}`;
@@ -375,14 +375,19 @@ export default class Client extends Events {
 	 * @throws {@link CaptchaError}
 	 */
 	async login(opts = { force: false }) {
+		// Use stored bearer
 		if (this.bearer && !opts.force) {
 			await this._update_payload();
 			this.authorized = true;
+			this.emit("login", false);
+			return this;
 		}
+
 		if (!opts.email) {
 			throw new Error("email is required to login without a token");
 		}
 
+		// Get bearer from config file
 		if (this.config[`bearer ${opts.email}`] && !opts.force) {
 			this.bearer = this.config[`bearer ${opts.email}`];
 			await this._update_payload();
@@ -390,6 +395,7 @@ export default class Client extends Events {
 			return this;
 		}
 
+		// Needs password to generate new bearer token
 		if (!opts.password) {
 			throw new Error("No stored token, password is required");
 		}
@@ -419,10 +425,12 @@ export default class Client extends Events {
 				throw new Error("access_token not given");
 				//console.log(response.data);
 			}
+			// uses sette function
 			this.bearer = response.data.access_token;
 			this._config[`bearer ${opts.email}`] = this.bearer;
 			this.config = this._config;
 		} catch (error) {
+			console.error(error?.data);
 			if (error.response.data.error === "captcha_required") {
 				throw new CaptchaError(error);
 			} else if (error.response.data.error === "too_many_user_auths") {
