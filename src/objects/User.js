@@ -142,6 +142,16 @@ export default class User extends FreshObject {
 	}
 
 	/**
+	 * Is the user the same as the client user?
+	 * @type {Promise<Boolean>}
+	 */
+	get me() {
+		return (async () => {
+			return (await this.id) == (await this.client.id);
+		})();
+	}
+
+	/**
 	 * Nick of the user
 	 * @type {Promise<String>}
 	 */
@@ -304,9 +314,7 @@ export default class User extends FreshObject {
 				next_milestone: xp?.next_milestone ?? null,
 				rank: xp?.rank ?? "Meme Explorer",
 				badge: {
-					url:
-						xp?.badge_url ??
-						"https://img.ifunny.co/meme_experience/0.png",
+					url: xp?.badge_url ?? "https://img.ifunny.co/meme_experience/0.png",
 					size: xp?.badge_size ?? {
 						w: 0,
 						h: 0,
@@ -388,10 +396,7 @@ export default class User extends FreshObject {
 	 */
 	get web_url() {
 		return (async () => {
-			return await this.get(
-				"web_url",
-				`https://ifunny.co/user/${await this.nick}`
-			);
+			return await this.get("web_url", `https://ifunny.co/user/${await this.nick}`);
 		})();
 	}
 
