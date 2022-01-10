@@ -143,15 +143,10 @@ export default class Client extends Events {
 
 		// Checks opts.token to see if it's a valid bearer token
 		if (opts.token) {
-			if (
-				!opts.token.match(/^[a-z0-9]{64}$/g) ||
-				opts.token.length !== 64
-			) {
+			if (!opts.token.match(/^[a-z0-9]{64}$/g) || opts.token.length !== 64) {
 				throw new Error(`Invalid bearer token: ${opts.token}`);
 			}
-			this.instance.defaults.headers[
-				"Authorization"
-			] = `Bearer ${opts.token}`;
+			this.instance.defaults.headers["Authorization"] = `Bearer ${opts.token}`;
 			this.authorized = true; // Assumes valid bearer token
 		}
 
@@ -230,9 +225,7 @@ export default class Client extends Events {
 				writeFileSync(this._config_path, "{}");
 			}
 
-			this._config = JSON.parse(
-				readFileSync(this._config_path).toString()
-			);
+			this._config = JSON.parse(readFileSync(this._config_path).toString());
 		}
 		return this._config;
 	}
@@ -307,28 +300,21 @@ export default class Client extends Events {
 
 	/**
 	 * iFunny basic auth token\
-	 * If none is stored in this Client's config, one will be generated\
-	 * Basic tokens must be `156` characters long\
-	 * iFunny creates basic auth token with UUID and not random bytes
+	 * If none is stored in this Client's config, one will be generated
 	 * @type {String}
 	 */
 	get basic_token() {
 		if (this.config.basic_token && !this._update) {
 			return this.config.basic_token;
 		}
-		// TODO Make sure basic tokens are only used for auths 3 times per token
 		let uuid = crypto.randomUUID().replace(/\-/g, "");
-		let hex = crypto
-			.createHash("sha256")
-			.update(uuid)
-			.digest("hex")
-			.toUpperCase();
+		let hex = crypto.createHash("sha256").update(uuid).digest("hex").toUpperCase();
 		let a = hex + "_MsOIJ39Q28:";
 		let b = hex + ":MsOIJ39Q28:PTDc3H8a)Vi=UYap";
 		let c = crypto.createHash("sha1").update(b).digest("hex");
 		let auth = Buffer.from(a + c).toString("base64");
 
-		this._config = Object.assign({ basic_token: auth }, this.config);
+		this._config = Object.assign(this.config, { basic_token: auth });
 		this.config = this._config;
 		this._update = false;
 		return auth;
@@ -640,10 +626,7 @@ export default class Client extends Events {
 	 * @type {Promise<String>}
 	 */
 	get chat_token() {
-		return this.get(
-			"messenger_token",
-			"1010101010101010101010101010101010101010"
-		);
+		return this.get("messenger_token", "1010101010101010101010101010101010101010");
 	}
 
 	/**
