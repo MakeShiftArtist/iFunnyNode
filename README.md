@@ -2,7 +2,7 @@
 
 This is an iFunny API Wrapper written in ES6 Node JS.\
 This is in the early stages so most of the API hasn't been implemented yet.\
-Chats will eventually be added, but I'm currently focusing on the rest of the API.\
+Chats have been implemented! I couldn't have done it without the amazing help from my good friend [Tobi/Pain](https://github.com/baiinss)
 **VERY EARLY STAGES**
 
 -   I'm writing this wrapper from scratch, taking inspiration from
@@ -27,9 +27,17 @@ const client = new Client({ token: "bearer_token" });
 client.login();
 
 // Almost every getter is async so you have to await them
-(async () => {
-	console.log(await client.feature_count);
-})();
+client.on("login", (new_bearer) => {
+	client.chats.connect();
+});
+
+// THANK YOU @TOBI for all the help setting up chats. Couldn't have done it without you.
+client.chats.on("message", async (ctx) => {
+	if (ctx.message.author.id_sync === client.id_sync) {
+		return;
+	}
+	console.log(`${await ctx.message.author.nick}:`, ctx.message.content); // Logs author and message content
+});
 ```
 
 ## Logging in
@@ -57,15 +65,7 @@ const client = new Client();
 
 client.on("login", async (new_bearer) => {
 	// Get a user by nickname
-	let user = await client.user_by_nick("iFunnyChef");
-
-	// Subscribe to the user
-	await user.subscribe();
-	console.log(`Subscribed to ${user.nick}`);
-	// Unsubscribe from the user
-	await user.unsubscribe();
-	console.log(`Unsubscribed from ${user.nick}`);
-});
+	console.log(client.bearer); // bearer token attatched to client
 
 (async () => {
 	try {
