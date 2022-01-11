@@ -48,3 +48,22 @@ Initial commit
 -   Fixed `Client.fresh.basic_token` not updating the config
 -   Added `User.me` getter
 -   Added `is freshable` to `test_basic_token.js`
+
+### 2.0.0
+
+**Co-authored-by: pain (AKA Tobi) <baiinss@users.noreply.github.com>**\
+**<u>MAJOR UPDATE! Added Chat functionality!</u>**
+
+-   Added `ChatObjects` folder
+-   Added `Chats.js` Chat Client for websockets
+-   Added `Channel.js` An ifunny Chat
+-   Added `ChatFile.js` A file sent in chats
+-   Added `ChatPaginator.js` for paginating chat websocket data
+-   Added `ChatUser.js` A user from chats with extra information
+-   Added `Context.js` Context of a websocket event
+-   Added `Message.js` A message sent in chats
+-   Added `MessageQueue.js` send message handler
+-   Added `SocketInstance.js` Modified wampy client to work with iFunny
+-   Added `calls.js` Webosocket calls that the chat Client needs
+-   Added `chatBase` and `chat` to `endpoints.js`
+-   Added `Client.chats` property
