@@ -10,6 +10,7 @@ import { homedir } from "os";
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
 import User from "./User.js";
 import crypto from "crypto";
+import Chats from "./Chats.js";
 
 /**
  * @typedef {Object} ClientOpts
@@ -166,6 +167,12 @@ export default class Client extends Events {
 		 * @type {String}
 		 */
 		this._config_path = `${homedir()}/.ifunnynode/config.json`;
+
+		/**
+		 * The client's chat clinet instance
+		 * @type {Chats}
+		 */
+		this.chats = new Chats(this);
 	}
 
 	/**
