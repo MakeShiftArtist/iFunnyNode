@@ -1,0 +1,17 @@
+export default {
+	default_realm: "co.fun.chat.ifunny",
+	accept_invite: "co.fun.chat.invite.accept",
+	invites: (uid) => `co.fun.chat.user.${uid}.invites`,
+	chats: (uid) => `co.fun.chat.user.${uid}.chats`,
+	chat_publish: (chatId) => `co.fun.chat.chat.${chatId}`,
+	list_members: `co.fun.chat.list_members`,
+	list_operators: `co.fun.chat.list_operators`,
+	kick_member: `co.fun.chat.kick_member`,
+	hide_chat: `co.fun.chat.hide_chat`,
+	mute_chat: `co.fun.chat.mute_chat`,
+	unmute_chat: `co.fun.chat.unmute_chat`,
+	register_operators: `co.fun.chat.register_operators`,
+	list_messages: `co.fun.chat.list_messages`,
+	listen_to_chat: (chat_id) => `co.fun.chat.chat.${chat_id}`,
+	get_chat: `co.fun.chat.get_Chat`,
+};
