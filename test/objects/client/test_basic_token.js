@@ -79,4 +79,12 @@ describe("client basic token", async () => {
 
 			expect(new Client().basic_token).to.equal(first);
 		});
+	it("is freshable", async () => {
+		let client_1 = new Client();
+		let first = client_1.basic_token;
+		let second = client_1.fresh.basic_token;
+		let third = new Client().basic_token;
+		expect(first).to.not.equal(second);
+		expect(second).to.equal(third);
+	});
 });

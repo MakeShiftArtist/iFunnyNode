@@ -41,3 +41,10 @@ Initial commit
 -   Timestamps return dates instead of the time in UNIX
 -   `User.subscribe` and `User.unsubscribe` now return the same instance of the User
 -   Fixed config getting reset or broken when runnning tests
+
+### 1.3.4
+
+-   `create_basic_token` now uses UUIDv4 instead of random bytes
+-   Fixed `Client.fresh.basic_token` not updating the config
+-   Added `User.me` getter
+-   Added `is freshable` to `test_basic_token.js`
