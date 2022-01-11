@@ -8,6 +8,6 @@ describe("sleep", async () => {
 		await sleep(1);
 		const after = Date.now();
 
-		expect(after - stamp).to.be.within(1000, 1020);
+		expect(after - stamp).to.be.within(995, 1020);
 	});
 });
