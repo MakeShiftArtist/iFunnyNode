@@ -3,6 +3,8 @@
  */
 export default {
 	base: "https://api.ifunny.mobi/v4",
+	chatBase: "chat.ifunny.co",
+	chat: "/chat",
 	account: "/account",
 	revoke: "/oauth2/revoke",
 	users: "/users/{user_id}",
