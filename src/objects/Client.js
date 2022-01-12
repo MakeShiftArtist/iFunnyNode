@@ -144,6 +144,9 @@ export default class Client extends Events {
 
 		// Checks opts.token to see if it's a valid bearer token
 		if (opts.token) {
+			if (typeof opts.token !== "string") {
+				throw new TypeError(`Token must be a String, not ${typeof opts.token}`);
+			}
 			if (!opts.token.match(/^[a-z0-9]{64}$/g) || opts.token.length !== 64) {
 				throw new Error(`Invalid bearer token: ${opts.token}`);
 			}
