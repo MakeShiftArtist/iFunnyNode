@@ -33,7 +33,7 @@ export default class Ban extends FreshObject {
 		 * Request url to make requests to
 		 * @type {String}
 		 */
-		this.request_url = `/users/${this.user_id}/bans/${this.id}`;
+		this.request_url = `/users/${this.user_id}/bans/${this.id_sync}`;
 	}
 
 	/**
