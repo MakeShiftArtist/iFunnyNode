@@ -485,8 +485,7 @@ export default class User extends FreshObject {
 	 * @type {Promise<String>}
 	 */
 	get nick_color() {
-		return this.get("nick_color", "A3A3A5");
-		// I believe that's the default username color, although we could use white instead
+		return this.get("nick_color", "FFFFFF");
 	}
 
 	/**
