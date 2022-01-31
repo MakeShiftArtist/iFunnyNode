@@ -143,12 +143,10 @@ export default class User extends FreshObject {
 
 	/**
 	 * Is the user the same as the client user?
-	 * @type {Promise<Boolean>}
+	 * @type {Boolean}
 	 */
-	get me() {
-		return (async () => {
-			return (await this.id) == (await this.client.id);
-		})();
+	get is_me() {
+		return this.id_sync === this.client.id_sync;
 	}
 
 	/**
