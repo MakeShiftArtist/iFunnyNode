@@ -1,4 +1,5 @@
 import ChatUser from "./ChatUser.js";
+
 /**
  * Represents a file that was sent in Chats
  * @see {@link ChatFile}
@@ -6,9 +7,16 @@ import ChatUser from "./ChatUser.js";
 export default class ChatFile {
 	constructor(ctx, payload) {
 		/**
-		 * @type {import("./ChatUser.js").default}
+		 * Author of the message
+		 * @type {import("./ChatUser.js").default|null}
 		 */
-		this.author = new ChatUser(payload.user.id, ctx, payload.user);
+		this._author = null;
+
+		/**
+		 * Context the ChatFile belongs to
+		 * @type {import("./Context.js").default|null}
+		 */
+		this.context = ctx;
 
 		/**
 		 * The payload of the file
@@ -51,27 +59,15 @@ export default class ChatFile {
 	}
 
 	/**
-	 * Width of the thumbnail
-	 * @type {Number}
+	 * Thumbnail of the file
+	 * @type {{'url': String, 'w': Number, 'h': Number}}
 	 */
-	get thumb_width() {
-		return this._payload?.files[0]?.thumb_width;
-	}
-
-	/**
-	 * Thumbnail height
-	 * @type {Number}
-	 */
-	get thumb_height() {
-		return this._payload?.files[0]?.thumb_height;
-	}
-
-	/**
-	 * Thumbnail url
-	 * @type {String}
-	 */
-	get thumb_url() {
-		return this._payload?.files[0]?.thumb_url;
+	get thumbnail() {
+		return {
+			url: this._payload?.files[0]?.thumb_url ?? null,
+			h: this._payload?.files[0]?.thumb_height ?? 0,
+			w: this._payload?.files[0]?.thumb_width ?? 0,
+		};
 	}
 
 	/**
@@ -80,5 +76,17 @@ export default class ChatFile {
 	 */
 	get url() {
 		return this._payload?.files[0]?.url;
+	}
+
+	/**
+	 * Get's the author of the File sent
+	 * @type {ChatUser|null}
+	 */
+	get author() {
+		return this._author ?? null;
+	}
+
+	set author(user) {
+		this._author = new ChatUser(user.id, ctx, user);
 	}
 }
