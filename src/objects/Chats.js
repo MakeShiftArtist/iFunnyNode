@@ -4,6 +4,7 @@ import Calls from "../utils/calls.js";
 import Context from "./ChatObjects/Context.js";
 import MessageQueue from "./ChatObjects/MessageQueue.js";
 import Channel from "./ChatObjects/Channel.js";
+import ChatFile from "./ChatObjects/ChatFile.js";
 
 /**
  * Chat Client for using iFunny Chats via websockets
@@ -33,6 +34,12 @@ export default class Chats extends EventEmitter {
 		 * @type {MessageQueue}
 		 */
 		this.messageQueue = new MessageQueue(this);
+
+		/**
+		 * Listeners for a specific channel
+		 * @type {Channel[]}
+		 */
+		this.channel_listeners = [];
 
 		/**
 		 * Timestamp of chat start so we know to ignore old messages
@@ -79,10 +86,14 @@ export default class Chats extends EventEmitter {
 						case 1:
 							context.message = chat.last_msg;
 							this.emit("message", context);
+							for (let channel of this.channel_listeners) {
+								if (context.channel.name_sync === channel.name) {
+									channel.emit("message", context);
+								}
+							}
 							break;
 						case 2:
-							chat.last_msg.files.map((file) => new File(context, file));
-							context.files = chat.last_msg.files;
+							context.file = chat.last_msg;
 							this.emit("file", context);
 							break;
 						case 3:
