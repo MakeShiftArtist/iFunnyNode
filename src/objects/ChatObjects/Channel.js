@@ -4,25 +4,30 @@ import ChatUser from "./ChatUser.js";
 import Message from "./Message.js";
 import { EventEmitter } from "events";
 
+/**
+ * Channel object representing an iFunny chat channel.
+ * @extends EventEmitter
+ * @see {@link Channel}
+ */
 export default class Channel extends EventEmitter {
 	/**
 	 *
-	 * @param {import("./Context").default} context
+	 * @param {import("./Context.js").default} context
 	 * @param {*} payload
 	 */
 	constructor(context, payload) {
 		super();
 
 		/**
-		 * @type {import("./Context").default}
+		 * Context associated with this channel
+		 * @type {import("./Context.js").default}
 		 */
 		this.context = context;
 
 		/**
-		 * @type {import("./SocketInstance").default}
+		 * The payload of the channel
+		 * @type {{[key: String]: any}}
 		 */
-		this.socket = this.context.chats.socket;
-
 		this._payload = payload;
 
 		/**
@@ -47,6 +52,21 @@ export default class Channel extends EventEmitter {
 	get fresh() {
 		this._update = true;
 		return this;
+	}
+
+	/**
+	 * Shortcut to `this.context.chats.socket`
+	 * @type {import("./SocketInstance.js").default}
+	 */
+	get socket() {
+		return this.context.chats.socket;
+	}
+
+	/**
+	 * Shortcut for `this.context.chats.client`
+	 */
+	get client() {
+		return this.context.chats.client;
 	}
 
 	/**
@@ -160,7 +180,7 @@ export default class Channel extends EventEmitter {
 
 	/**
 	 * Generator of messages you can iterate over
-	 * @type {Promise<Generator<import("./Message").default>>}
+	 * @type {Promise<Generator<Message>>}
 	 */
 	get messages() {
 		return Promise.resolve(
@@ -183,7 +203,7 @@ export default class Channel extends EventEmitter {
 
 	/**
 	 * Generator of operators you can iterate over
-	 * @type {Promise<Generator<import("./ChatUser").default>>}
+	 * @type {Promise<Generator<ChatUser>>}
 	 */
 	get operators() {
 		return Promise.resolve(
@@ -210,7 +230,7 @@ export default class Channel extends EventEmitter {
 
 	/**
 	 * Generator of members you may iterate over
-	 * @type {Promise<Generator<import("./ChatUser").default>>}
+	 * @type {Promise<Generator<ChatUser>>}
 	 */
 	get members() {
 		return Promise.resolve(
@@ -219,7 +239,7 @@ export default class Channel extends EventEmitter {
 					call: Calls.list_members,
 					key: "members",
 					SocketOpts: {
-						chat_name: this.name,
+						chat_name: this.name_sync,
 						limit: 200,
 						query: null,
 					},
@@ -230,6 +250,21 @@ export default class Channel extends EventEmitter {
 				}
 			}.bind(this)()
 		);
+	}
+
+	/**
+	 * The ChatUser object for the client
+	 * @type {Promise<ChatUser|null>}
+	 */
+	get me() {
+		return async () => {
+			for await (let member of await this.members) {
+				if (member.is_me) {
+					return member;
+				}
+			}
+			return null;
+		};
 	}
 
 	/**
@@ -267,36 +302,40 @@ export default class Channel extends EventEmitter {
 	 */
 	kick(user) {
 		let id = user?.id || user;
-		return this.socket.call(Calls.kick_member, [this.name, id]);
+		this.socket.call(Calls.kick_member, [this.name, id]);
+		return this.fresh;
 	}
 
 	/**
 	 * Hides the chat client side
 	 * @returns {Promise}
 	 */
-	hide() {
-		return this.socket.call(Calls.hide_chat, [this.name]);
+	async hide() {
+		this.socket.call(Calls.hide_chat, [this.name]);
+		return this.fresh;
 	}
 
 	/**
 	 * Adds an operator to a PUBLIC group chat
-	 * @param {import("../User.js").default|import("./ChatUser.js").default|String} user
+	 * @param {import("../User.js").default|ChatUser|String} user User object or id you want to add to operator list
 	 * @returns {Promise}
 	 */
 	async add_operator(user) {
-		//Add error handling lol
-		let id = user?.id || user;
+		// Client must be an admin to add operators
+		if (!(await this.me).is_admin) {
+			throw new Error("You must be an admin of the chat to add an operator");
+		}
 
+		let id = user?.id_sync || user;
+		// TODO Use is_operator instead of for loop
 		for await (let operator of await this.operators) {
-			if (operator.id == this.context.chats.client.id) {
-				return this.socket.call(Calls.register_operators, [
-					await this.name,
-					[id],
-				]);
+			if (operator.id === (await this.client.id)) {
+				this.socket.call(Calls.register_operators, [await this.name, [id]]);
+				return this.fresh;
 			}
 		}
 
-		throw new Error("Bot must be an operator to add operators");
+		throw new Error("Bot must be an admin to add operators");
 	}
 
 	/**
@@ -307,23 +346,26 @@ export default class Channel extends EventEmitter {
 	mute(until) {
 		//Until needs to be a UNIX stamp
 		// ! chat is undefined
-		return this.socket.call(Calls.mute - chat, [this.name, until]);
+		this.socket.call(Calls.mute - chat, [this.name, until]);
+		return this.fresh;
 	}
 
 	/**
 	 * Unmutes a channel
-	 * @returns {Promise}
+	 * @returns {Promise<Channel>}
 	 */
 	unmute() {
-		return this.socket.call(Calls.unmute_chat, [this.name]);
+		this.socket.call(Calls.unmute_chat, [this.name]);
+		return this.fresh;
 	}
 
 	/**
 	 * Accepts an invite from a channel
-	 * @returns {Promise}
+	 * @returns {Promise<Channel>} Channel.fresh
 	 */
 	accept_invite() {
-		return this.socket.call(Calls.accept_invite, [this.name]);
+		this.socket.call(Calls.accept_invite, [this.name]);
+		return this.fresh;
 	}
 
 	/**
@@ -339,10 +381,9 @@ export default class Channel extends EventEmitter {
 		 */
 		return new Promise((resolve, reject) => {
 			//let nick = (!(opts.nick) && (opts.nick != null)) ? this.context.author.nick : opts.nick
-			let nick = opts.nick || null;
-
+			//let nick = opts.nick || null;
+			/*
 			this.context.chats.messageQueue.addToQueue({
-				// ! this.name_sync hasn't binded the channel
 				name: this.name_sync,
 				nick: nick,
 				content: content,
@@ -350,6 +391,8 @@ export default class Channel extends EventEmitter {
 					resolve(data);
 				},
 			});
+			*/
+			this.context.chats.send_message(this.name_sync, content);
 		});
 	}
 
@@ -357,18 +400,20 @@ export default class Channel extends EventEmitter {
 	 * Starts listening to a channel and emits to "message"
 	 */
 	listen() {
-		this.socket.subscribe(Calls.listen_to_chat(this.name), (data) => {
-			if (data.message) {
-				this.emit("message", new Message(this.context, data.message));
-			}
-		});
+		let listeners = this.context.chats.channel_listeners;
+		let infex_of = listeners.findIndex((ele) => ele.name_sync === this.name_sync);
+		if (infex_of === -1) {
+			this.context.chats.channel_listeners.push(this);
+		}
 	}
 
 	/**
 	 * Stops listening to a channel
-	 * @returns {Promise}
 	 */
 	stop_listening() {
-		return this.socket.unsubscribe(Calls.listen_to_chat(this.name));
+		let listeners = this.context.chats.channel_listeners;
+		this.context.chats.channel_listeners = listeners.filter(
+			(ele) => ele.name_sync !== this.name_sync
+		);
 	}
 }
