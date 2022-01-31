@@ -115,9 +115,9 @@ export default class Client extends Events {
 		 * iFunny version must be the most recent version for oauth!
 		 * @type {String}
 		 */
-		this._user_agent =
+		this.user_agent =
 			opts.user_agent ||
-			"iFunny/7.14.2(22213) Android/12 (samsung; SM-G996U; samsung)";
+			"iFunny/7.18.1(1120212) Android/12 (samsung; SM-G996U; samsung)";
 
 		/**
 		 * Prefix for the bot
@@ -134,7 +134,7 @@ export default class Client extends Events {
 			timeout: 2500,
 			headers: {
 				"Ifunny-Project-Id": "iFunny",
-				"User-Agent": this._user_agent,
+				"User-Agent": this.user_agent,
 				applicationstate: 1,
 				accept: "application/json,image/jpeg,image/webp,video/mp4",
 				"accept-language": "en-US",
@@ -299,7 +299,7 @@ export default class Client extends Events {
 		let type = this.authorized ? "Bearer " : "Basic ";
 		return {
 			"Ifunny-Project-Id": "iFunny",
-			"User-Agent": this._user_agent,
+			"User-Agent": this.user_agent,
 			Authorization: type + auth,
 			applicationstate: 1,
 			accept: "application/json,image/jpeg,image/webp,video/mp4",
@@ -314,13 +314,17 @@ export default class Client extends Events {
 	 * @type {String}
 	 */
 	get basic_token() {
+		// Return stored basic token
 		if (this.config.basic_token && !this._update) {
 			return this.config.basic_token;
 		}
+
+		// Generate the token
+		// ? Basic tokens must be made using UUIDv4, and must be 156 characters long
 		let uuid = crypto.randomUUID().replace(/\-/g, "");
 		let hex = crypto.createHash("sha256").update(uuid).digest("hex").toUpperCase();
-		let a = hex + "_MsOIJ39Q28:";
-		let b = hex + ":MsOIJ39Q28:PTDc3H8a)Vi=UYap";
+		let a = hex + `_${this._client_id}:`;
+		let b = hex + `:${this._client_id}:${this._client_secret}`;
 		let c = crypto.createHash("sha1").update(b).digest("hex");
 		let auth = Buffer.from(a + c).toString("base64");
 
