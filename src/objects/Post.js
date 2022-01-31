@@ -136,8 +136,8 @@ export default class Post extends FreshObject {
 	}
 
 	/**
-	 * Shot status\
-	 * (I don't know what this does)
+	 * Status of the content's approval
+	 * `approved` - Can be posted in comments
 	 * @type {Promise<String>}
 	 */
 	get shot_status() {
