@@ -5,7 +5,7 @@
 
 /**
  * @typedef {Object} MessageObject Object that message queue data is stored in
- * @property {String} channelName
+ * @property {String} channel_name
  * @property {String} nick
  * @property {String} content
  * @property {MessageCallback} callback
@@ -16,13 +16,13 @@
  */
 export default class MessageQueue {
 	/**
-	 * @param {import("../Chats.js").default} chatClient
+	 * @param {import("../Chats.js").default} chat_client
 	 */
-	constructor(chatClient) {
+	constructor(chat_client) {
 		/**
 		 * @type {import("../Chats.js").default}
 		 */
-		this.chats = chatClient;
+		this.chats = chat_client;
 
 		/**
 		 * @type {MessageObject[]}
@@ -65,10 +65,20 @@ export default class MessageQueue {
 
 			let callbacks = [];
 
-			for (let index of this.queued_messages) {
+			// ! Broken, needs to be fixed to send messages properly
+			// ? Channel.send() just calls chats.send_message() directly
+			// TODO Fix message sending so that it follows rate limit handling guidelines
+			/**
+			 * ? Rate Limit: 20 messages per minute
+			 * Client should never be rate limited
+			 * If there was no message sent in the last 3 seconds, send it immediately.
+			 * If one WAS sent in the last 3 seconds, have the client wait the duration of the 3 seconds before sending the next message
+			 * Consolidate a lot of messages for the same channel into the same message to reduce messages sent
+			 * * Make auto-ratelimit handling an option, NOT a requirement, in case the user wants to handle it themselves
+			 */
+			for (let index in this.queued_messages) {
 				let queued_message = this.queued_messages[index];
-
-				if (queued_message.channelName != message.channelName) continue;
+				if (queued_message.channel_name != message.channel_name) continue;
 
 				let total_length = 0;
 
@@ -134,7 +144,7 @@ export default class MessageQueue {
 		let priority = opts.priority || false;
 
 		let message = {
-			channelName: opts.channel?.name || opts.channel,
+			channel_name: opts.channel?.name || opts.channel,
 			nick: opts.user?.nick || opts.nick,
 			content: opts.content,
 			callback: opts.callback,
