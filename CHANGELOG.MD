@@ -67,3 +67,22 @@ Initial commit
 -   Added `calls.js` Webosocket calls that the chat Client needs
 -   Added `chatBase` and `chat` to `endpoints.js`
 -   Added `Client.chats` property
+
+### 2.0.1
+
+-   Fixed `sleep` test failing if it resolves slightly too quickly
+-   `ClientOpts.token` checks arg type
+-   Updated Client.user_agent to `7.18.1`
+-   `Ban.request_url` now uses `id_sync` instead of the Promise `id`
+-   **BREAKING!** `User.me` changed to `User.is_me` to be more clear
+-   Fixed: `Channel.listen()` and `Channel.stop_listening()` now work properly
+-   Change: `User.nick_color` default to white instead of gray
+-   **BREAKING!** `ChatFile.thumbnail` replaces all 3 thumbnail getters
+-   Refactored `ChatFile.js`
+-   Updated documentation for `Post.status`
+-   Refactored how `Client.basic_token` generates tokens
+-   **BREAKING!** `Client._user_agent` now `Client.user_agent` since it doesn't need to be private.
+-   `Client.user_agent` is updated to latest iFunny Version
+-   Updated Documentation and notes for `MessageQueue.js`
+-   Update: Added `ChatUser.online`, `async ChatUser.fetch()` and `ChatUser.in_chat` methods
+-   Updated `ChatUser.last_seen_at` to work consistently.
