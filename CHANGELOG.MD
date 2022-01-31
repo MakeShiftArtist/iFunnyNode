@@ -75,7 +75,6 @@ Initial commit
 -   Updated Client.user_agent to `7.18.1`
 -   `Ban.request_url` now uses `id_sync` instead of the Promise `id`
 -   **BREAKING!** `User.me` changed to `User.is_me` to be more clear
--   Fixed: `Channel.listen()` and `Channel.stop_listening()` now work properly
 -   Change: `User.nick_color` default to white instead of gray
 -   **BREAKING!** `ChatFile.thumbnail` replaces all 3 thumbnail getters
 -   Refactored `ChatFile.js`
@@ -86,3 +85,11 @@ Initial commit
 -   Updated Documentation and notes for `MessageQueue.js`
 -   Update: Added `ChatUser.online`, `async ChatUser.fetch()` and `ChatUser.in_chat` methods
 -   Updated `ChatUser.last_seen_at` to work consistently.
+
+### 2.1.0
+
+-   Added `Channel.me` which returns the client's ChatUser object for that channel
+-   Fixed: `Channel.listen()` and `Channel.stop_listening()` now work properly
+-   Temporary Fix: `Channel.send()` now works, but isn't using the built in message handler
+-   Improved documentation for `Channel.js`
+-   Change: `Channel` methods now return `Channel.fresh` instead of their websocket call
