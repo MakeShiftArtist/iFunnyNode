@@ -9,7 +9,7 @@ export class ApiError extends Error {
 	 * @param {String} message Message of the error
 	 */
 	constructor(error, message = null) {
-		super();
+		super(message);
 		/**
 		 * Request that led to the error
 		 * @type {Object}
@@ -22,29 +22,8 @@ export class ApiError extends Error {
 		 */
 		this.response = error.response;
 
-		/**
-		 * Error data for handling the error
-		 * @type {Object}
-		 */
-		this.data = error.response.data;
-
-		/**
-		 * Status code from the server response
-		 * @type {Number}
-		 */
-		this.status_code = this.data.status;
-
-		/**
-		 * Message of the api error
-		 * @type {String}
-		 */
-		this.message = message;
-
-		/**
-		 * Descript of the error given
-		 * @type {String}
-		 */
-		this.description = this.data.error_description;
+		// Capture the error stack trace
+		Error.captureStackTrace(this, this.constructor);
 	}
 }
 
