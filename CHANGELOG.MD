@@ -93,3 +93,9 @@ Initial commit
 -   Temporary Fix: `Channel.send()` now works, but isn't using the built in message handler
 -   Improved documentation for `Channel.js`
 -   Change: `Channel` methods now return `Channel.fresh` instead of their websocket call
+
+### 2.1.1
+
+-   Updated `ApiError` class to show correct error message
+-   Added `response timeout` interceptor on `Client`
+-   Changed `Client._payload = new_payload` to `Object.assign(Client._payload, new_payload)` to preserve non new data
