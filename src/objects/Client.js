@@ -142,6 +142,24 @@ export default class Client extends Events {
 			},
 		});
 
+		this.instance.interceptors.response.use(
+			(response) => response,
+			(error) => {
+				if (error) {
+				} else if (
+					error?.response?.status === 408 ||
+					error?.code === "ECONNABORTED"
+				) {
+					return Promise.reject(
+						new ApiError(
+							error,
+							`Timeout (${error.config.timeout}ms) Exceeded on url "${error.config.url}"`
+						)
+					);
+				} else return Promise.reject(new ApiError(error));
+			}
+		);
+
 		// Checks opts.token to see if it's a valid bearer token
 		if (opts.token) {
 			if (typeof opts.token !== "string") {
@@ -205,8 +223,8 @@ export default class Client extends Events {
 			url: this.request_url,
 		});
 
-		// Update client cache
-		this._payload = response.data.data;
+		// Update client cache without removing old values
+		Object.assign(this._payload, response.data.data);
 		// Update client.user cache
 		this._user._payload = this._payload;
 
@@ -328,7 +346,7 @@ export default class Client extends Events {
 		let c = crypto.createHash("sha1").update(b).digest("hex");
 		let auth = Buffer.from(a + c).toString("base64");
 
-		this._config = Object.assign(this.config, { basic_token: auth });
+		Object.assign(this._config, { basic_token: auth });
 		this.config = this._config;
 		this._update = false;
 		return auth;
@@ -350,11 +368,16 @@ export default class Client extends Events {
 			let response = await this.instance.request({
 				url: this.request_url,
 			});
-			this._payload = response.data.data;
+
+			// Update values included in response
+			Object.assign(this._payload, response.data.data);
+
+			// Update user payload
 			this._user = new User(this.id_sync, this, {
 				data: this._payload,
 				url: this.request_url,
 			});
+
 			return this._payload;
 		} catch (error) {
 			let data = error.response.data;
