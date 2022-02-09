@@ -197,6 +197,19 @@ export default class Client extends Events {
 	}
 
 	/**
+	 * Client's on Event handler use {EventEmitter}
+	 * @param {('message'|'login')} event_name
+	 * @param {{(...args: any): void}} listener
+	 * **Events:** \
+	 * `message`: `Message`\
+	 * `login`: `boolean`
+	 */
+	on(event_name, listener) {
+		super.on(event_name, listener);
+		return this;
+	}
+
+	/**
 	 * Get value from cache or update cache
 	 * @param {String} key Key to query
 	 * @param {*} [fallback=null] Fallback value if no value is found (default's to null)
@@ -396,6 +409,7 @@ export default class Client extends Events {
 	 * @param {Boolean} [opts.force=false] Force log in with email and password
 	 * @return {Promise<Client>} Itself after the login completes
 	 * @throws {@link CaptchaError}
+	 * @fires Client#login
 	 */
 	async login(opts = { force: false }) {
 		// Use stored bearer
