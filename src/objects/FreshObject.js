@@ -2,12 +2,11 @@
 "use strict";
 
 import Events from "events"; // allows for events like 'on_message'
-import Client from "./Client.js";
 
 /**
  * @typedef {Object} FreshOpts
  * @property {Object} [data={}] The data received from the server
- * @property {String} [url='/account'] The url to make requests to
+ * @property {String} [url] The url to make requests to
  */
 
 /**
@@ -16,8 +15,10 @@ import Client from "./Client.js";
 export default class FreshObject extends Events {
 	/**
 	 * @param {String} id Id of the object
-	 * @param {Client} client Client the objct belongs to
-	 * @param {FreshOpts} [opts={}]
+	 * @param {import("./Client.js").default} client Client the object belongs to
+	 * @param {Object} [opts={}] Opts for the Object being created
+	 * @param {Object} [opts.data={}] The data received from the server
+	 * @param {String} [opts.url] The url to make requests to
 	 */
 	constructor(id, client, opts = {}) {
 		super();
@@ -33,7 +34,7 @@ export default class FreshObject extends Events {
 
 		/**
 		 * Client the object belongs to
-		 * @type {Client}
+		 * @type {import("./Client.js").default}
 		 */
 		this.client = client;
 

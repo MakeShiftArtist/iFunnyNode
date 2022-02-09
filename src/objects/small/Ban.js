@@ -2,14 +2,6 @@
 "use strict";
 
 import FreshObject from "../FreshObject.js";
-import Client from "../Client.js";
-
-/**
- * @typedef {Object} BanOpts
- * @property {Object} [data={}] The data received from the server
- * @property {String} [url] The url to make requests to
- * @property {String} [user_id] The user id to fetch bans for
- */
 
 /**
  * Represents an iFunny Ban Object
@@ -18,8 +10,11 @@ import Client from "../Client.js";
 export default class Ban extends FreshObject {
 	/**
 	 * @param {String} id Id of the ban
-	 * @param {Client} client Client the Ban object is attatched to
-	 * @param {BanOpts} [opts]
+	 * @param {import("../Client.js").default} client Client the Ban object is attatched to
+	 * @param {Object} [opts]
+	 * @param {Object} [opts.data={}] The data received from the server
+	 * @param {String} [opts.url] The url to make requests to
+	 * @param {String} [opts.user_id] The user id to fetch bans for
 	 */
 	constructor(id, client, opts = {}) {
 		super(id, client, opts);

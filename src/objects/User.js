@@ -2,7 +2,6 @@
 "use strict";
 
 import FreshObject from "./FreshObject.js";
-import Client from "./Client.js";
 import Ban from "./small/Ban.js";
 
 /**
@@ -58,7 +57,7 @@ export default class User extends FreshObject {
 	/**
 	 * User Object
 	 * @param {string} id Id of the user
-	 * @param {Client} client Client the user is attached to
+	 * @param {import("./Client.js").default} client Client the user is attached to
 	 * @param {FreshOpts} [opts={}] Optional data
 	 */
 	constructor(id, client, opts = {}) {

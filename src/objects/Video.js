@@ -1,6 +1,7 @@
 // @ts-check
+"use strict";
+
 import Post from "./Post.js";
-import Client from "./Client.js";
 
 /**
  * @typedef {Object} VideoClip
@@ -23,7 +24,7 @@ import Client from "./Client.js";
 export default class VideoPost extends Post {
 	/**
 	 * @param {String} id Id of the video
-	 * @param {Client} client
+	 * @param {import("./Client.js").default} client
 	 * @param {PostOpts} opts
 	 */
 	constructor(id, client, opts) {

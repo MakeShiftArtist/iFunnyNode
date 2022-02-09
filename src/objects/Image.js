@@ -1,6 +1,7 @@
 // @ts-check
+"use strict";
+
 import Post from "./Post.js";
-import Client from "./Client.js";
 
 /**
  * @typedef {Object} PostOpts
@@ -16,7 +17,7 @@ import Client from "./Client.js";
 export default class ImagePost extends Post {
 	/**
 	 * @param {String} id
-	 * @param {Client} client
+	 * @param {import("./Client.js").default} client
 	 * @param {PostOpts} opts
 	 */
 	constructor(id, client, opts = {}) {
@@ -40,9 +41,9 @@ export default class ImagePost extends Post {
 	 */
 	get detected_text() {
 		return (async () => {
-			if ((await this.get("type")) === "pic")
+			if ((await this.get("type")) === "pic") {
 				return await this.get("ocr_text");
-			else return null;
+			} else return null;
 		})();
 	}
 
