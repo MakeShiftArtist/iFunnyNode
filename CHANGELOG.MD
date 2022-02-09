@@ -99,3 +99,7 @@ Initial commit
 -   Updated `ApiError` class to show correct error message
 -   Added `response timeout` interceptor on `Client`
 -   Changed `Client._payload = new_payload` to `Object.assign(Client._payload, new_payload)` to preserve non new data
+-   Updated imports and documentation for `Ban.js`, `FreshObject.js`, `Image.js`, `index.js`, `User.js`, `Video.js`
+-   Fixed Channel Listeners comparing `Channel.name` to `Channel.name_sync`
+-   `Chats.socket` callback is now async.
+-   Added proper documentation for `Client.on`
