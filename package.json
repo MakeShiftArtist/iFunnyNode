@@ -18,7 +18,8 @@
 	],
 	"author": "MakeShiftArtist <MakeShiftServices@gmail.com> (https://github.com/makeshiftartist)",
 	"contributors": [
-		"Eva <mail@gastrodon.io> (https://github.com/gastrodon)"
+		"Eva <mail@gastrodon.io> (https://github.com/gastrodon)",
+		"Tobi (https://github.com/baiinss)"
 	],
 	"license": "Unlicense",
 	"dependencies": {
