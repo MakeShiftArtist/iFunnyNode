@@ -4,7 +4,6 @@ import Calls from "../utils/calls.js";
 import Context from "./ChatObjects/Context.js";
 import MessageQueue from "./ChatObjects/MessageQueue.js";
 import Channel from "./ChatObjects/Channel.js";
-import ChatFile from "./ChatObjects/ChatFile.js";
 
 /**
  * Chat Client for using iFunny Chats via websockets
@@ -63,7 +62,7 @@ export default class Chats extends EventEmitter {
 			this.emit("invites", context);
 		});
 
-		this.socket.subscribe(Calls.chats(await this.client.id), (data) => {
+		this.socket.subscribe(Calls.chats(await this.client.id), async (data) => {
 			for (let chat of data.argsDict.chats) {
 				if (chat?.last_msg?.pub_at && chat?.last_msg?.pub_at < this.started_at) {
 					return;
@@ -87,7 +86,7 @@ export default class Chats extends EventEmitter {
 							context.message = chat.last_msg;
 							this.emit("message", context);
 							for (let channel of this.channel_listeners) {
-								if (context.channel.name_sync === channel.name) {
+								if (context.channel.name_sync === channel.name_sync) {
 									channel.emit("message", context);
 								}
 							}
@@ -125,7 +124,7 @@ export default class Chats extends EventEmitter {
 	 * @param {String} content Message you want to send
 	 * @returns {Promise<{[key: string]: any}>}
 	 */
-	send_message(channel, content) {
+	async send_message(channel, content) {
 		let name = channel?.name || channel;
 		return new Promise((resolve, reject) => {
 			this.socket.publish(Calls.chat_publish(name), [200, 1, content], {
@@ -136,8 +135,9 @@ export default class Chats extends EventEmitter {
 		});
 	}
 
+	// ! id is never called
+	// TODO Fix Chats.get_chat
 	/**
-	 *
 	 * @param {String} id
 	 * @param {Context} context
 	 * @returns {Promise<Channel>}
