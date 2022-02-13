@@ -86,8 +86,8 @@ export default class FreshObject extends Events {
 			url: this.request_url,
 		});
 
-		// update cached data
-		this._payload = response.data.data;
+		// update cached data without losing existing data
+		Object.assign(this._payload, response.data.data);
 		return this._payload[key] || fallback;
 	}
 
