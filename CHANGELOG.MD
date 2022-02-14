@@ -103,3 +103,8 @@ Initial commit
 -   Fixed Channel Listeners comparing `Channel.name` to `Channel.name_sync`
 -   `Chats.socket` callback is now async.
 -   Added proper documentation for `Client.on`
+
+# 2.1.2
+
+-   `FreshObject.get()` now updates the payload with `Object.assign()`
+-   `FreshObject.get` uses nullish coalescing instead of `||` operator for the fallback
