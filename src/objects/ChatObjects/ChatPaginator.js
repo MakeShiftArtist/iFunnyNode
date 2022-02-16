@@ -1,6 +1,8 @@
+/** @typedef {import(./Context.js).default} Context*/
+
 /**
  * Paginator for chats using websocket calls
- * @param {import("./Context").default} context
+ * @param {Context} context
  * @param {Object} PaginatorOpts
  * @param {String} PaginatorOpts.call Call that you want the paginator to make to the socket
  * @param {Object} PaginatorOpts.SocketOpts Opts to pass to the socket
