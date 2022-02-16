@@ -1,49 +1,62 @@
 // @ts-check
-"use strict";
 
 import Events from "events"; // allows for events like 'on_message'
-import { sleep } from "../utils/methods.js";
+import { sleep, paginator } from "../utils/methods.js";
 import { ApiError, CaptchaError, AuthError } from "../utils/exceptions.js";
 import Ban from "./small/Ban.js";
 import axios from "axios";
 import { homedir } from "os";
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
 import User from "./User.js";
+import Guest from "./small/Guest.js";
 import crypto from "crypto";
 import Chats from "./Chats.js";
+import ImagePost from "./small/ImagePost.js";
+import VideoPost from "./small/VideoPost.js";
+import CaptionPost from "./small/CaptionPost.js";
 
 /**
  * @typedef {Object} ClientOpts
- * @property {String} [user_agent] User agent to make requests with
- * @property {String} [prefix] Prefix for the bot commands
- * @property {String} [token] Bearer token for the bot to use if you have one stored
+ * @property {string} [user_agent] User agent to make requests with
+ * @property {string} [prefix] Prefix for the bot commands
+ * @property {string} [token] Bearer token for the bot to use if you have one stored
  */
 
 /**
  * @typedef {Object} UserStats
- * @property {Number} subscriptions Amount of subscriptions the user has
- * @property {Number} subscribers Amount of subcribers the user has
- * @property {Number} total_posts Amount of total posts the user has
- * @property {Number} created Amount of created posts the user has
- * @property {Number} featured Amount of features the user has
- * @property {Number} total_smiles Amount of total smiles the user has
- * @property {Number} achievements Amount of achievements the user has
+ * @property {number} subscriptions Amount of subscriptions the user has
+ * @property {number} subscribers Amount of subcribers the user has
+ * @property {number} total_posts Amount of total posts the user has
+ * @property {number} created Amount of created posts the user has
+ * @property {number} featured Amount of features the user has
+ * @property {number} total_smiles Amount of total smiles the user has
+ * @property {number} achievements Amount of achievements the user has
  */
 
 /**
  * @typedef {Object} ProfilePicture
- * @property {String} bg_color Background color of the profile picture
+ * @property {string} bg_color Background color of the profile picture
  * @property {Object} thumb Thumbnail urls of the profile picture
- * @property {String} thumb.small_url small url of the thumbnail 100x
- * @property {String} thumb.medium_url medium url of the thumbnail 200x
- * @property {String} thumb.large_url large url of the thumbnail 400x
- * @property {String} url URL of the profile picture
+ * @property {string} thumb.small_url small url of the thumbnail 100x
+ * @property {string} thumb.medium_url medium url of the thumbnail 200x
+ * @property {string} thumb.large_url large url of the thumbnail 400x
+ * @property {string} url URL of the profile picture
  */
 
 /**
- * @typedef {Object} CoverImage
- * @property {String} url URL of the cover image
- * @property {String} bg_color Background color of the cover image
+ * @typedef {Object} Level
+ * @property {string} id Id of the level
+ * @property {number} value Level rank (IE Level 1)
+ * @property {number} points Amount of points needed to reach the level
+ */
+
+/**
+ * @typedef {Object} UserRating
+ * @property {number} points Amount of points the user has
+ * @property {Level} current_level The current level of the user
+ * @property {Level} next_level The next level for the user
+ * @property {Level} max_level The max level for the API (99)
+ * @property {boolean} is_show_level Does the rating show on the user's profile? (Not enabled)
  */
 
 /**
@@ -51,7 +64,7 @@ import Chats from "./Chats.js";
  */
 export default class Client extends Events {
 	/**
-	 * @param {ClientOpts=} opts Options for the Client to use
+	 * @param {ClientOpts} [opts] Options for the Client to use
 	 */
 	constructor(opts = {}) {
 		super();
@@ -61,14 +74,14 @@ export default class Client extends Events {
 		/**
 		 * Client Id for creating the basic token
 		 * @private
-		 * @type {String}
+		 * @type {string}
 		 */
 		this._client_id = "MsOIJ39Q28";
 
 		/**
 		 * Client secret for creating the basic token
 		 * @private
-		 * @type {String}
+		 * @type {string}
 		 */
 		this._client_secret = "PTDc3H8a)Vi=UYap";
 
@@ -104,7 +117,7 @@ export default class Client extends Events {
 		/**
 		 * Url for this.get
 		 * Only change if you know what you're doing
-		 * @type {String}
+		 * @type {string}
 		 */
 		this.request_url = `/account`;
 
@@ -113,7 +126,7 @@ export default class Client extends Events {
 		/**
 		 * User agent for making requests
 		 * iFunny version must be the most recent version for oauth!
-		 * @type {String}
+		 * @type {string}
 		 */
 		this.user_agent =
 			opts.user_agent ||
@@ -121,7 +134,7 @@ export default class Client extends Events {
 
 		/**
 		 * Prefix for the bot
-		 * @type {String|null}
+		 * @type {string|null}
 		 */
 		this.prefix = opts.prefix || null;
 
@@ -163,7 +176,7 @@ export default class Client extends Events {
 		// Checks opts.token to see if it's a valid bearer token
 		if (opts.token) {
 			if (typeof opts.token !== "string") {
-				throw new TypeError(`Token must be a String, not ${typeof opts.token}`);
+				throw new TypeError(`Token must be a string, not ${typeof opts.token}`);
 			}
 			if (!opts.token.match(/^[a-z0-9]{64}$/g) || opts.token.length !== 64) {
 				throw new Error(`Invalid bearer token: ${opts.token}`);
@@ -174,7 +187,7 @@ export default class Client extends Events {
 
 		/**
 		 * Bearer token if stored in cache
-		 * @type {String|null}
+		 * @type {string|null}
 		 */
 		this._token = opts.token || null;
 
@@ -185,7 +198,7 @@ export default class Client extends Events {
 
 		/**
 		 * Config path where tokens are stored
-		 * @type {String}
+		 * @type {string}
 		 */
 		this._config_path = `${homedir()}/.ifunnynode/config.json`;
 
@@ -211,7 +224,7 @@ export default class Client extends Events {
 
 	/**
 	 * Get value from cache or update cache
-	 * @param {String} key Key to query
+	 * @param {string} key Key to query
 	 * @param {*} [fallback=null] Fallback value if no value is found (default's to null)
 	 * @return {Promise<*>} Retrieved data from key or fallback
 	 * @throws `Error`
@@ -232,14 +245,7 @@ export default class Client extends Events {
 
 		this._update = false;
 
-		let response = await this.instance.request({
-			url: this.request_url,
-		});
-
-		// Update client cache without removing old values
-		Object.assign(this._payload, response.data.data);
-		// Update client.user cache
-		this._user._payload = this._payload;
+		await this._update_payload();
 
 		return this._payload[key] ?? fallback;
 	}
@@ -249,7 +255,7 @@ export default class Client extends Events {
 	 * @example
 	 * this.foo // cached value
 	 * this.fresh.foo // new value
-	 * @return {Client} itself with this._update set to true
+	 * @return {this} itself with this._update set to true
 	 */
 	get fresh() {
 		this._update = true;
@@ -285,7 +291,7 @@ export default class Client extends Events {
 
 	/**
 	 * Bearer token for this client
-	 * @type {String|null}
+	 * @type {string|null}
 	 */
 	get bearer() {
 		return this._token;
@@ -301,7 +307,7 @@ export default class Client extends Events {
 			return;
 		}
 		if (typeof value !== "string") {
-			throw new TypeError(`Token must be a String, not ${typeof value}`);
+			throw new TypeError(`Token must be a string, not ${typeof value}`);
 		}
 		if (!value.match(/^[a-z0-9]{64}$/g) || value.length !== 64) {
 			throw new Error(`Invalid bearer token: ${value}`);
@@ -314,7 +320,7 @@ export default class Client extends Events {
 
 	/**
 	 * iFunny Base API
-	 * @type {String}
+	 * @type {string}
 	 */
 	get api() {
 		return "https://api.ifunny.mobi/v4";
@@ -342,7 +348,7 @@ export default class Client extends Events {
 	/**
 	 * iFunny basic auth token\
 	 * If none is stored in this Client's config, one will be generated
-	 * @type {String}
+	 * @type {string}
 	 */
 	get basic_token() {
 		// Return stored basic token
@@ -404,8 +410,8 @@ export default class Client extends Events {
 	/**
 	 * Logs the Client in
 	 * @param {Object} [opts] Optional params for logging in
-	 * @param {String} [opts.email] Email of the Client to log in with
-	 * @param {String} [opts.password] Password to log in with, required if no bearer is stored
+	 * @param {string} [opts.email] Email of the Client to log in with
+	 * @param {string} [opts.password] Password to log in with, required if no bearer is stored
 	 * @param {Boolean} [opts.force=false] Force log in with email and password
 	 * @return {Promise<Client>} Itself after the login completes
 	 * @throws {@link CaptchaError}
@@ -467,12 +473,12 @@ export default class Client extends Events {
 			this._config[`bearer ${opts.email}`] = this.bearer;
 			this.config = this._config;
 		} catch (error) {
-			console.error(error?.data);
+			//console.error(error?.data);
 			if (error.response.data.error === "captcha_required") {
 				throw new CaptchaError(error);
 			} else if (error.response.data.error === "too_many_user_auths") {
 				throw new AuthError(error);
-			}
+			} else throw error;
 		}
 
 		await sleep(5); // Primes bearer
@@ -484,7 +490,7 @@ export default class Client extends Events {
 
 	/**
 	 * Gets a User by ID
-	 * @param {String} id Id of the User to retrieve
+	 * @param {string} id Id of the User to retrieve
 	 * @return {Promise<User|null>} The {@link User} object of the client
 	 * @throws {@link TypeError}
 	 */
@@ -497,7 +503,7 @@ export default class Client extends Events {
 
 	/**
 	 * Gets a User object by nickname
-	 * @param {String} nick Nickname of the User to retrieve
+	 * @param {string} nick Nickname of the User to retrieve
 	 * @return {Promise<User|null>} The {@link User} object of the client
 	 * @throws {@link TypeError}
 	 */
@@ -528,7 +534,7 @@ export default class Client extends Events {
 
 	/**
 	 * The email address attached to the Client
-	 * @type {Promise<String|null>}
+	 * @type {Promise<string|null>}
 	 */
 	get email() {
 		return this.get("email");
@@ -536,7 +542,7 @@ export default class Client extends Events {
 
 	/**
 	 * The hometown of the Client
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get hometown() {
 		return this.get("hometown", "");
@@ -544,7 +550,7 @@ export default class Client extends Events {
 
 	/**
 	 * The location of the Client
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get location() {
 		return this.get("location", "");
@@ -552,7 +558,7 @@ export default class Client extends Events {
 
 	/**
 	 * The Client's User Id
-	 * @type {Promise<String|null>}
+	 * @type {Promise<string|null>}
 	 */
 	get id() {
 		return this.get("id", this.id_sync);
@@ -560,8 +566,8 @@ export default class Client extends Events {
 
 	/**
 	 * Synchronous version of {@link Client.id}\
-	 * Will return `null` if the Client hsan't made any async requests
-	 * @type {String|null}
+	 * Will return `null` if the Client hsan't made any requests
+	 * @type {string|null}
 	 */
 	get id_sync() {
 		return this._payload?.id ?? null;
@@ -569,7 +575,7 @@ export default class Client extends Events {
 
 	/**
 	 * Nick of the lient
-	 * @type {Promise<String|null>}
+	 * @type {Promise<string|null>}
 	 */
 	get nick() {
 		return this.get("nick");
@@ -577,7 +583,7 @@ export default class Client extends Events {
 
 	/**
 	 * Original nick of the Client
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get original_nick() {
 		return this.get("original_nick", this.nick);
@@ -588,7 +594,7 @@ export default class Client extends Events {
 	 * `public` allows anyone to open a chat with the User\
 	 * `subscribers` only allows subscribers to open a chat with the User\
 	 * `closed` doesn't allow anyone to open a chat with the User
-	 * @type {Promise<String|null>}
+	 * @type {Promise<string|null>}
 	 */
 	get chat_privacy() {
 		return this.get("messaging_privacy_status");
@@ -597,7 +603,7 @@ export default class Client extends Events {
 	/**
 	 * The Client's about
 	 * Alias for {@link bio Client.bio}
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get about() {
 		return this.get("about", "");
@@ -606,7 +612,7 @@ export default class Client extends Events {
 	/**
 	 * The Client's bio
 	 * Alias for {@link about Client.about}
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get bio() {
 		return this.about;
@@ -615,7 +621,7 @@ export default class Client extends Events {
 	/**
 	 * The Client's account link that can be opened in iFunny\
 	 * Alias for {@link web_url Client.web_url}
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get link() {
 		return this.web_url;
@@ -624,7 +630,7 @@ export default class Client extends Events {
 	/**
 	 * The Client's account link that can be opened in iFunny\
 	 * Alias for {@link link Client.link}
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get web_url() {
 		return this.get("web_url");
@@ -640,7 +646,7 @@ export default class Client extends Events {
 
 	/**
 	 * The Client's cover image url
-	 * @type {Promise<CoverImage>}
+	 * @type {Promise<{ url: string, bg_color: string }>}
 	 */
 	get cover_image() {
 		return this.user.cover_image;
@@ -674,7 +680,7 @@ export default class Client extends Events {
 	/**
 	 * Client's messenger token for chats
 	 * I believe this is left over from sendbird chats
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get chat_token() {
 		return this.get("messenger_token", "1010101010101010101010101010101010101010");
@@ -800,7 +806,7 @@ export default class Client extends Events {
 
 	/**
 	 * Amount of users the Client is subscribed to
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get subscription_count() {
 		return (async () => {
@@ -810,7 +816,7 @@ export default class Client extends Events {
 
 	/**
 	 * Amount of subcribers the Client has
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get subscriber_count() {
 		return (async () => {
@@ -820,7 +826,7 @@ export default class Client extends Events {
 
 	/**
 	 * Amount of total posts on the Client's account
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get post_count() {
 		return (async () => {
@@ -831,7 +837,7 @@ export default class Client extends Events {
 	/**
 	 * Amount of posts that the Client uploaded (non-repubs)\
 	 * Alias for {@link original_post_count Client.original_post_count}
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get created_count() {
 		return (async () => {
@@ -842,7 +848,7 @@ export default class Client extends Events {
 	/**
 	 * Amount of posts that the Client uploaded (non-repubs)
 	 * Alias for {@link created_count Client.created_count}
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get original_post_count() {
 		return this.created_count;
@@ -851,7 +857,7 @@ export default class Client extends Events {
 	/**
 	 * Amount of posts on the clients account that are republishes
 	 * Not original
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get republication_count() {
 		return (async () => {
@@ -861,7 +867,7 @@ export default class Client extends Events {
 
 	/**
 	 * Amount of features the Client has
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get feature_count() {
 		return (async () => {
@@ -871,7 +877,7 @@ export default class Client extends Events {
 
 	/**
 	 * Amount of smiles the Client has (only counts for posts)
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get smile_count() {
 		return (async () => {
@@ -881,7 +887,7 @@ export default class Client extends Events {
 
 	/**
 	 * Amount of achievements the Client has
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get achievement_count() {
 		return (async () => {
@@ -891,10 +897,64 @@ export default class Client extends Events {
 
 	/**
 	 * Rating of the User (No longer used by iFunny)
-	 * I'm not adding the getters for this since it's been deprecated
-	 * @type {Promise<Object|null>}
+	 * @type {Promise<UserRating|null>}
 	 */
 	get rating() {
 		return this.get("rating");
+	}
+
+	/**
+	 * Gets a post object by Id
+	 * @param {string} id Id of the post to retrieve
+	 * @returns {Promise<ImagePost|VideoPost|CaptionPost>}
+	 */
+	async get_post(id) {
+		let { data } = await this.instance.request({
+			url: `${this.api}/content/${id}`,
+		});
+
+		let post = data.data;
+		if (post.type === "pic") {
+			return new ImagePost(post.id, this, { data: post });
+		} else if (post.type === "video_clip") {
+			return new VideoPost(post.id, this, { data: post });
+		} else if (post.type === "caption") {
+			return new CaptionPost(post.id, this, { data: post });
+		} else throw new Error(`Post (${post.id}: Invalid post type: ${post.type}`);
+	}
+
+	/**
+	 * Paginates {@link Guest Guests} from the client's guests
+	 * @param {number} limit Limit on number of guests per API call
+	 * @yields {Guest}
+	 */
+	async *guests(limit = 30) {
+		let url = `/users/${await this.id}/guests`;
+
+		let each_guest = paginator(this, {
+			url: url,
+			key: "guests",
+			params: { limit },
+		});
+
+		for await (let item of each_guest) {
+			let guest = item.guest;
+			yield new Guest(guest.id, this, {
+				data: guest,
+				visited_at: item.visit_timestamp,
+			});
+		}
+	}
+
+	/**
+	 * Paginates posts from the user's timeline
+	 * @param {number} limit Number of posts per API call
+	 * @yields {Promise<ImagePost|CaptionPost>}
+	 */
+	async *timeline(limit = 30) {
+		let posts = this.user.timeline(limit);
+		for await (let post of posts) {
+			yield post;
+		}
 	}
 }
