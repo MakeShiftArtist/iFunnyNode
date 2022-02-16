@@ -1,7 +1,6 @@
 // @ts-check
-"use strict";
 
-import Post from "./Post.js";
+import Post from ".././Post.js";
 
 /**
  * @typedef {Object} PostOpts
@@ -17,7 +16,7 @@ import Post from "./Post.js";
 export default class ImagePost extends Post {
 	/**
 	 * @param {String} id
-	 * @param {import("./Client.js").default} client
+	 * @param {import("../Client.js").default} client
 	 * @param {PostOpts} opts
 	 */
 	constructor(id, client, opts = {}) {
