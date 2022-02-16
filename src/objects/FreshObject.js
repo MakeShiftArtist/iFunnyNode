@@ -1,24 +1,26 @@
 // @ts-check
-"use strict";
 
-import Events from "events"; // allows for events like 'on_message'
+import EventEmitter from "events"; // allows for events like 'on_message'
 
 /**
  * @typedef {Object} FreshOpts
  * @property {Object} [data={}] The data received from the server
- * @property {String} [url] The url to make requests to
+ * @property {string} [url] The url to make requests to
  */
+
+/** @typedef {import("./Client.js").default} Client */
 
 /**
  * Base object that all other objects will inherit
+ * @extends EventEmitter
  */
-export default class FreshObject extends Events {
+export default class FreshObject extends EventEmitter {
 	/**
-	 * @param {String} id Id of the object
-	 * @param {import("./Client.js").default} client Client the object belongs to
+	 * @param {string|null} id Id of the object
+	 * @param {Client} client Client the object belongs to
 	 * @param {Object} [opts={}] Opts for the Object being created
 	 * @param {Object} [opts.data={}] The data received from the server
-	 * @param {String} [opts.url] The url to make requests to
+	 * @param {string} [opts.url] The url to make requests to
 	 */
 	constructor(id, client, opts = {}) {
 		super();
@@ -28,19 +30,19 @@ export default class FreshObject extends Events {
 
 		/**
 		 * Id of the object
-		 * @type {String|null}
+		 * @type {string|null}
 		 */
 		this.id_sync = id;
 
 		/**
 		 * Client the object belongs to
-		 * @type {import("./Client.js").default}
+		 * @type {Client}
 		 */
 		this.client = client;
 
 		/**
 		 * The url used for making requests to get information about the object
-		 * @type {String|undefined}
+		 * @type {string}
 		 */
 		this.request_url = opts.url ?? "/account";
 
@@ -68,7 +70,7 @@ export default class FreshObject extends Events {
 
 	/**
 	 * Get value from cached response
-	 * @param {String} key  Key to query
+	 * @param {string} key  Key to query
 	 * @param {*} fallback  Default value if no value is found
 	 * @return {Promise<*>}  Retrieved data
 	 */
@@ -96,7 +98,7 @@ export default class FreshObject extends Events {
 	 * @example
 	 * this.foo // cached value
 	 * this.fresh.foo // new value
-	 * @return {FreshObject|any} itself with this._update set to true
+	 * @return {this} itself with this._update set to true
 	 */
 	get fresh() {
 		this._update = true;
@@ -105,7 +107,7 @@ export default class FreshObject extends Events {
 
 	/**
 	 * Shortcut for 'this.client.api'
-	 * @return {String} Client api
+	 * @return {string} Client api
 	 */
 	get api() {
 		return this.client.api;
