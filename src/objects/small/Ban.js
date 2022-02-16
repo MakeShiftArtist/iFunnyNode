@@ -1,5 +1,4 @@
 // @ts-check
-"use strict";
 
 import FreshObject from "../FreshObject.js";
 
