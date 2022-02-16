@@ -5,22 +5,24 @@ import Client from "./Client.js";
 import FreshObject from "./FreshObject.js";
 import User from "./User.js";
 
+import url from "url";
+
 /**
  * @typedef {Object} PostOpts
  * @property {Object} [data={}] The data received from the server
- * @property {String} [url='/content/{content_id}'] The url to make requests to
+ * @property {string} [url='/content/{content_id}'] The url to make requests to
  */
 
 /**
  * @typedef {Object} Thumbnail Watermark cropped at different sizes
- * @property {String} small_url Jpeg format, Square, Size 65x, Quality: 90x75
- * @property {String} url Jpeg format, Square, Size 160x, Quality: 90x75
- * @property {String} large_url Jpeg format, Square, Size 320x, Quality: 90x75
- * @property {String} x640_url Jpeg format, Size 640x Quality: 95x75
- * @property {String} webp_url Webp format, Square, Size 160x, Quality: 90
- * @property {String} large_webp_url Webp format, Square, Size 320x, Quality: 90
- * @property {String} proportional_url Jpeg format, Size 320x, Crop x800, Quality: 90x75
- * @property {String} proportional_webp_url Webp format, Size 320x, Crop, Quality: 90
+ * @property {string} small_url Jpeg format, Square, Size 65x, Quality: 90x75
+ * @property {string} url Jpeg format, Square, Size 160x, Quality: 90x75
+ * @property {string} large_url Jpeg format, Square, Size 320x, Quality: 90x75
+ * @property {string} x640_url Jpeg format, Size 640x Quality: 95x75
+ * @property {string} webp_url Webp format, Square, Size 160x, Quality: 90
+ * @property {string} large_webp_url Webp format, Square, Size 320x, Quality: 90
+ * @property {string} proportional_url Jpeg format, Size 320x, Crop x800, Quality: 90x75
+ * @property {string} proportional_webp_url Webp format, Size 320x, Crop, Quality: 90
  * @property {Size} proportional_size Proportional Size of the thumbnail
  */
 
@@ -42,37 +44,68 @@ import User from "./User.js";
  */
 
 /**
+ * Updates the payload.nums
+ * @private
+ * @param {Object} payload The post payload
+ * @param {Object} nums the new nums to update the payload with
+ * @returns {object} The new payload nums
+ */
+function updateSmiles(payload, nums) {
+	let final = {
+		smiles: nums.nums_smiles,
+		unsmiles: nums.nums_unsmiles,
+		guest_smiles: nums.nums_guest_smiles,
+	};
+
+	if (payload.nums) {
+		return Object.assign(payload.nums, final);
+	} else {
+		payload.nums = final;
+		return payload.nums;
+	}
+}
+
+/**
  * Post Object, representing an iFunny Post of any type
  * @extends FreshObject
  * @see {@link Post}
  */
 export default class Post extends FreshObject {
 	/**
-	 * @param {String} id Unique Post ID
+	 * @param {string} id Unique Post ID
 	 * @param {Client} client Client used for methods
 	 * @param {Object} [opts={}] Optional arguments
 	 * @param {PostOpts} [opts.data={}] Payload of the data if already known
 	 */
 	constructor(id, client, opts = {}) {
 		super(id, client, opts);
+		let creator = this._payload["creator"] ?? null;
 		/**
 		 * Cached post author
 		 * @type {User}
 		 */
-		this._user = new User(id, client, {
-			data: this._payload["creator"] ?? {},
+		this._user = new User(creator?.id ?? null, client, {
+			data: creator ?? {},
 		});
 
 		/**
 		 * Request url for `this.get` method
-		 * @type {String}
+		 * @type {string}
 		 */
 		this.request_url = `/content/${this.id_sync}`;
 	}
 
 	/**
+	 * Asynchronous version of `this.id_sync`
+	 * @type {Promise<string>}
+	 */
+	get id() {
+		return this.get("id", this.id_sync);
+	}
+
+	/**
 	 * Sharable link to the post
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get link() {
 		return this.get("link");
@@ -80,7 +113,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Content url with old banner watermark
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get url() {
 		return this.get("url");
@@ -88,7 +121,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Content url with new overlay watermark
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get share_url() {
 		return this.get("share_url");
@@ -96,7 +129,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Type of post (`video_clip` or `pic`)
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get type() {
 		return this.get("type");
@@ -104,7 +137,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Title of the post
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get title() {
 		return this.get("title");
@@ -112,7 +145,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Description of the post
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get description() {
 		return this.get("description", "");
@@ -120,7 +153,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Tags attatched to the post
-	 * @type {Promise<Array<String>>}
+	 * @type {Promise<Array<string>>}
 	 */
 	get tags() {
 		return this.get("tags", []);
@@ -129,7 +162,7 @@ export default class Post extends FreshObject {
 	/**
 	 * Publish status\
 	 * `published` or `delayed`
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get state() {
 		return this.get("state");
@@ -138,7 +171,7 @@ export default class Post extends FreshObject {
 	/**
 	 * Status of the content's approval
 	 * `approved` - Can be posted in comments
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get shot_status() {
 		return this.get("shot_status");
@@ -146,7 +179,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Post visibility
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get visibility() {
 		return this.get("visibility");
@@ -383,8 +416,8 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Dynamic title of the post\
-	 * Alias for {@link fixed_title Image.fixed_title}
-	 * @type {Promise<String>}
+	 * Alias for {@link fixed_title Post.fixed_title}
+	 * @type {Promise<string>}
 	 */
 	get dynamic_title() {
 		return this.fixed_title;
@@ -392,8 +425,8 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Fixed title of the Post
-	 * Alias for {@link dynamic_title Image.dynamic_title}
-	 * @type {Promise<String>}
+	 * Alias for {@link dynamic_title Post.dynamic_title}
+	 * @type {Promise<string>}
 	 */
 	get fixed_title() {
 		return this.get("fixed_title", this.title);
@@ -410,7 +443,7 @@ export default class Post extends FreshObject {
 	/**
 	 * The id for the post content url\
 	 * NOT the id of the post object itself
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get content_id() {
 		return (async () => {
@@ -433,5 +466,140 @@ export default class Post extends FreshObject {
 			let origin = await this.get("source");
 			return origin ? new Post(origin.id, this.client, origin) : this;
 		})();
+	}
+
+	/**
+	 * Smiles a post
+	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
+	 * @returns {Promise<this>}
+	 */
+	async smile(from = "prof") {
+		let { data } = await this.instance.request({
+			method: "PUT",
+			url: `${this.request_url}/smiles`,
+			params: new url.URLSearchParams({ from }),
+		});
+		updateSmiles(this._payload, data.data);
+		this._payload.is_smiled = true;
+		this._payload.is_unsmiled = false;
+		return this;
+	}
+
+	/**
+	 * Removes the smile if the post is smiled
+	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
+	 * @returns {Promise<this>}
+	 */
+	async remove_smile(from = "prof") {
+		let { data } = await this.instance.request({
+			method: "DELETE",
+			url: `${this.request_url}/smiles`,
+			params: new url.URLSearchParams({ from }),
+		});
+		updateSmiles(this._payload, data.data);
+		this._payload.is_smiled = false;
+		return this;
+	}
+
+	/**
+	 * Unsmiles a post
+	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
+	 * @returns {Promise<this>}
+	 */
+	async unsmile(from = "prof") {
+		let { data } = await this.instance.request({
+			method: "PUT",
+			url: `${this.request_url}/unsmiles`,
+			params: new url.URLSearchParams({ from }),
+		});
+		updateSmiles(this._payload, data.data);
+		this._payload.is_smiled = false;
+		this._payload.is_unsmiled = true;
+		return this;
+	}
+
+	/**
+	 * Removes an unsmile if the content is smiled
+	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
+	 * @returns {Promise<this>}
+	 */
+	async remove_unsmile(from = null) {
+		let { data } = await this.instance.request({
+			method: "DELETE",
+			url: `${this.request_url}/unsmiles`,
+			params: new url.URLSearchParams({ from }),
+		});
+		updateSmiles(this._payload, data.data);
+		this._payload.is_unsmiled = false;
+		return this;
+	}
+
+	/**
+	 * Republishes a post
+	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
+	 * @returns {Promise<Post>}
+	 */
+	async republish(from = null) {
+		if (await this.is_republished) {
+			throw new Error(`Post (${await this.id}) is already republished`);
+		}
+		let { data } = await this.instance.request({
+			method: "POST",
+			url: `${this.request_url}/republished`,
+			params: new url.URLSearchParams({ from }),
+		});
+		return this.client.get_post(data.data.id);
+	}
+
+	/**
+	 * Removes republish from post\
+	 * If you do this on the republished ID, the id will be made invalid
+	 */
+	async unrepublish(from = null) {
+		if (!(await this.is_republished)) {
+			throw new Error(`Post (${await this.id}) is not republished`);
+		}
+		let { data } = await this.instance.request({
+			method: "DELETE",
+			url: `${this.request_url}/republished`,
+			params: new url.URLSearchParams({ from }),
+		});
+		this._payload.nums = this._payload.nums ?? {};
+		this._payload.nums.republished = data.nums_republished;
+		this._payload.is_republished = false;
+		return this;
+	}
+
+	/**
+	 * Pins a post if it's on the client's timeline
+	 * @returns {Promise<this>}
+	 */
+	async pin() {
+		if ((await this.author).id_sync !== (await this.client.id)) {
+			throw new Error(`Post (${await this.id}) isn't owned by the client`);
+		}
+		await this.instance.request({
+			method: "PUT",
+			url: `${this.request_url}/pinned`,
+		});
+		this._payload.is_pinned = true;
+		return this;
+	}
+
+	/**
+	 * Unpins the post from the client's timeline
+	 * @return {Promise<this>}
+	 */
+	async unpin() {
+		if (!(await this.is_pinned)) {
+			throw new Error(`Post (${await this.id}) isn't pinned by the client`);
+		}
+
+		await this.instance.request({
+			method: "DELETE",
+			url: `${this.request_url}/pinned`,
+		});
+		this._payload.is_pinned = false;
+		return this;
 	}
 }
