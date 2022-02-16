@@ -108,3 +108,16 @@ Initial commit
 
 -   `FreshObject.get()` now updates the payload with `Object.assign()`
 -   `FreshObject.get` uses nullish coalescing instead of `||` operator for the fallback
+
+# 2.2.0
+
+-   Added `paginator` to `methods.js` for paginating data
+-   Added `Client.guests()` generator
+-   Added `Guest` object for `Client.guests()`
+-   Added `Client.timeline()` generator
+-   Added `User.timeline()` generator
+-   Added `Client.get_post()` function
+-   Added `smile()`, `unsmile()`, `remove_smile()`, `remove_unsmile()`, `republish()`, `unrepublish()`, `pin()`, and `unpin()` functions to `Post.js`
+-   Renamed `Image.js` and `Video.js` to `ImagePost.js` and `VideoPost.js` respectively
+-   Moved `ImagePost.js` and `VideoPost.js` to `src/objects/small` since they're smaller objects
+-   Added `CaptionPost` class
