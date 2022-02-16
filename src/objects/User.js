@@ -3,6 +3,10 @@
 
 import FreshObject from "./FreshObject.js";
 import Ban from "./small/Ban.js";
+import { paginator } from "../utils/methods.js";
+import ImagePost from "./small/ImagePost.js";
+import VideoPost from "./small/VideoPost.js";
+import CaptionPost from "./small/CaptionPost.js";
 
 /**
  * @typedef {Object} UserStats
@@ -508,5 +512,33 @@ export default class User extends FreshObject {
 			url: "/subscribers",
 		});
 		return this.fresh;
+	}
+
+	/**
+	 * Paginates posts from the user's timeline
+	 * @param {number} limit How many posts to show per call
+	 * @yields {Promise<ImagePost|VideoPost|CaptionPost>}
+	 */
+	async *timeline(limit = 30) {
+		let url = `/timelines/users/${await this.id}`;
+
+		let each_post = paginator(this.client, {
+			url: url,
+			key: "content",
+			params: { limit },
+		});
+
+		for await (let post of each_post) {
+			if (post.type === "pic") {
+				yield new ImagePost(post.id, this.client, { data: post });
+			} else if (post.type === "video_clip") {
+				yield new VideoPost(post.id, this.client, { data: post });
+			} else if (post.type === "caption") {
+				yield new CaptionPost(post.id, this.client, { data: post });
+			} else {
+				console.log(post);
+				throw new Error(`Invalid post type: ${post.type} (${post.id})`);
+			}
+		}
 	}
 }
