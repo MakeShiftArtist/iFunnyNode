@@ -20,23 +20,29 @@ To use the Client, you'll simply use `npm install ifunnynode` in your terminal, 
 // import your client
 import Client from "ifunnynode";
 
-// initalize client with bearer token
-const client = new Client({ token: "bearer_token" });
+// initalize client with bearer token and basic token
+const client = new Client({ token: "bearer_token", basic: "basic_token" });
 
 // Logging in doesn't need any args because we already have the token
 client.login();
 
-// Almost every getter is async so you have to await them
-client.on("login", (new_bearer) => {
+client.on("login", async (new_bearer) => {
+	// Almost every getter is async, so you'll have to await them. Refer to the docs for which don't need to be awaited
+	console.log(`Client logged in as ${await client.nick} (${client.id_sync})`);
+
+	// Connect to the chats websocket
 	client.chats.connect();
 });
 
 // THANK YOU @TOBI for all the help setting up chats. Couldn't have done it without you.
 client.chats.on("message", async (ctx) => {
-	if (ctx.message.author.id_sync === client.id_sync) {
+	// Ignore self
+	if (await (await ctx.message.author).is_me) {
 		return;
 	}
-	console.log(`${await ctx.message.author.nick}:`, ctx.message.content); // Logs author and message content
+
+	// Send a message in response
+	await ctx.channel.send("Message received!");
 });
 ```
 
@@ -69,8 +75,8 @@ client.on("login", async (new_bearer) => {
 
 (async () => {
 	try {
-		// emits 'login' with `true` if it's a new bearer
-		// or `false` if it had one in the config file
+		// The wrapper doesn't store the basic token, which needs to be reused to login, so you'll wanna store this before attempting a login
+		console.log(client.basic_token);
 		await client.login({
 			email: IFUNNY_EMAIL,
 			password: IFUNNY_PASSWORD,
@@ -78,6 +84,7 @@ client.on("login", async (new_bearer) => {
 	} catch (err) {
 		// check if error was CaptchaError
 		if (err.captcha_url) {
+			// Open this url in the browser and solve it, then make the request again, using the same basic token
 			console.log(captcha_url);
 		} else {
 			// NOT a CaptchaError
