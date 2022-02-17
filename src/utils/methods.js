@@ -149,10 +149,10 @@ export function get_post_type(post, client) {
 	switch (post.type) {
 		case "caption":
 		case "pic":
-			return new ImagePost(post.id, this, { data: post });
+			return new ImagePost(post.id, client, { data: post });
 		case "video_clip":
 		case "gif":
-			return new VideoPost(post.id, this, { data: post });
+			return new VideoPost(post.id, client, { data: post });
 		default:
 			throw new Error(`Post (${post.id}: Invalid post type: ${post.type}`);
 	}
