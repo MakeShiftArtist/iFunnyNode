@@ -121,3 +121,11 @@ Initial commit
 -   Renamed `Image.js` and `Video.js` to `ImagePost.js` and `VideoPost.js` respectively
 -   Moved `ImagePost.js` and `VideoPost.js` to `src/objects/small` since they're smaller objects
 -   Added `CaptionPost` class
+
+# 2.3.0
+
+-   Added `get_post_type()` function
+-   Added `post_body_paginator` generator function for collective
+-   Consolidated `CaptionPost` with `ImagePost`
+-   Added `Comment.js`
+-   Added `Client.features` and `Client.collective` generators
