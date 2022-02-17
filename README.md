@@ -2,7 +2,7 @@
 
 This is an iFunny API Wrapper written in ES6 Node JS.\
 This is in the early stages so most of the API hasn't been implemented yet.\
-Chats have been implemented! I couldn't have done it without the amazing help from my good friend [Tobi/Pain](https://github.com/baiinss)
+Chats have been implemented! I couldn't have done it without the amazing help from my good friend [Tobi/Pain](https://github.com/baiinss)\
 **VERY EARLY STAGES**
 
 -   I'm writing this wrapper from scratch, taking inspiration from
@@ -13,7 +13,7 @@ Chats have been implemented! I couldn't have done it without the amazing help fr
 
 ## Using the module
 
-The module was written in ES6, so you'll need to specify the type as `module` in `package.json` or change the extensions to `.mjs` instead of `.js`
+The module was written in ES6, so you'll need to specify the type as `module` in `package.json` or change the extensions to `.mjs` instead of `.js`\
 To use the Client, you'll simply use `npm install ifunnynode` in your terminal, and import the client like so:
 
 ```js
@@ -48,7 +48,7 @@ client.chats.on("message", async (ctx) => {
 
 ## Logging in
 
-Logging in isn't as simple as it used to be due to iFunny updating their API\
+Logging in for the first time isn't as simple as it used to be due to iFunny updating their API\
 iFunny will sometimes return a captcha error, so you'll need to solve them
 
 1. Create a try block with your login method being called there
