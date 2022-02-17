@@ -9,12 +9,12 @@ Initial commit
 
 -   Added `Client.login` method
 
-### 1.2.0
+# 1.2.0
 
 -   Fixed `Client.login` method
 -   Added `CaptchaError` Error class
 
-### 1.3.0
+## 1.3.0
 
 -   Added `Post` class
 -   Added `ImagePost` class
@@ -49,7 +49,7 @@ Initial commit
 -   Added `User.me` getter
 -   Added `is freshable` to `test_basic_token.js`
 
-### 2.0.0
+# 2.0.0
 
 **Co-authored-by: pain (AKA Tobi) <baiinss@users.noreply.github.com>**\
 **<u>MAJOR UPDATE! Added Chat functionality!</u>**
@@ -86,7 +86,7 @@ Initial commit
 -   Update: Added `ChatUser.online`, `async ChatUser.fetch()` and `ChatUser.in_chat` methods
 -   Updated `ChatUser.last_seen_at` to work consistently.
 
-### 2.1.0
+## 2.1.0
 
 -   Added `Channel.me` which returns the client's ChatUser object for that channel
 -   Fixed: `Channel.listen()` and `Channel.stop_listening()` now work properly
@@ -104,12 +104,12 @@ Initial commit
 -   `Chats.socket` callback is now async.
 -   Added proper documentation for `Client.on`
 
-# 2.1.2
+### 2.1.2
 
 -   `FreshObject.get()` now updates the payload with `Object.assign()`
 -   `FreshObject.get` uses nullish coalescing instead of `||` operator for the fallback
 
-# 2.2.0
+## 2.2.0
 
 -   Added `paginator` to `methods.js` for paginating data
 -   Added `Client.guests()` generator
@@ -122,10 +122,14 @@ Initial commit
 -   Moved `ImagePost.js` and `VideoPost.js` to `src/objects/small` since they're smaller objects
 -   Added `CaptionPost` class
 
-# 2.3.0
+## 2.3.0
 
 -   Added `get_post_type()` function
 -   Added `post_body_paginator` generator function for collective
 -   Consolidated `CaptionPost` with `ImagePost`
 -   Added `Comment.js`
 -   Added `Client.features` and `Client.collective` generators
+
+# 2.3.1
+
+-   Fixed `get_post_type` not using the client
