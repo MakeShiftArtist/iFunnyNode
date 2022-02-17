@@ -1,7 +1,12 @@
 // @ts-check
 
 import Events from "events"; // allows for events like 'on_message'
-import { sleep, paginator } from "../utils/methods.js";
+import {
+	sleep,
+	paginator,
+	get_post_type,
+	post_body_paginator,
+} from "../utils/methods.js";
 import { ApiError, CaptchaError, AuthError } from "../utils/exceptions.js";
 import Ban from "./small/Ban.js";
 import axios from "axios";
@@ -13,7 +18,6 @@ import crypto from "crypto";
 import Chats from "./Chats.js";
 import ImagePost from "./small/ImagePost.js";
 import VideoPost from "./small/VideoPost.js";
-import CaptionPost from "./small/CaptionPost.js";
 
 /**
  * @typedef {Object} ClientOpts
@@ -906,7 +910,7 @@ export default class Client extends Events {
 	/**
 	 * Gets a post object by Id
 	 * @param {string} id Id of the post to retrieve
-	 * @returns {Promise<ImagePost|VideoPost|CaptionPost>}
+	 * @returns {Promise<ImagePost|VideoPost>}
 	 */
 	async get_post(id) {
 		let { data } = await this.instance.request({
@@ -914,13 +918,16 @@ export default class Client extends Events {
 		});
 
 		let post = data.data;
-		if (post.type === "pic") {
-			return new ImagePost(post.id, this, { data: post });
-		} else if (post.type === "video_clip") {
-			return new VideoPost(post.id, this, { data: post });
-		} else if (post.type === "caption") {
-			return new CaptionPost(post.id, this, { data: post });
-		} else throw new Error(`Post (${post.id}: Invalid post type: ${post.type}`);
+		switch (post.type) {
+			case "caption":
+			case "pic":
+				return new ImagePost(post.id, this, { data: post });
+			case "video_clip":
+			case "gif":
+				return new VideoPost(post.id, this, { data: post });
+			default:
+				throw new Error(`Post (${post.id}: Invalid post type: ${post.type}`);
+		}
 	}
 
 	/**
@@ -949,12 +956,47 @@ export default class Client extends Events {
 	/**
 	 * Paginates posts from the user's timeline
 	 * @param {number} limit Number of posts per API call
-	 * @yields {Promise<ImagePost|CaptionPost>}
+	 * @yields {Promise<ImagePost|VideoPost>}
 	 */
 	async *timeline(limit = 30) {
 		let posts = this.user.timeline(limit);
 		for await (let post of posts) {
 			yield post;
+		}
+	}
+
+	/**
+	 * Paginates posts from the featured feed
+	 * @param {number} limit
+	 * @param {boolean} is_new
+	 */
+	async *features(limit = 30, is_new = false) {
+		let url = `/feeds/featured`;
+		let feat_posts = paginator(this, {
+			url,
+			key: "content",
+			params: { limit, is_new },
+		});
+
+		for await (let post of feat_posts) {
+			yield get_post_type(post, this);
+		}
+	}
+
+	/**
+	 * Paginates posts from the collective feed
+	 * @param {number} limit
+	 */
+	async *collective(limit = 30) {
+		let url = `/feeds/collective`;
+		let coll_posts = post_body_paginator(this, {
+			url,
+			key: "content",
+			body: { limit },
+		});
+
+		for await (let post of coll_posts) {
+			yield get_post_type(post, this);
 		}
 	}
 }
