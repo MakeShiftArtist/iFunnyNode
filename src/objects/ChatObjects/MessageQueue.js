@@ -13,6 +13,7 @@
 
 /**
  * Message queuer and handler
+ * @deprecated
  */
 export default class MessageQueue {
 	/**
@@ -37,6 +38,7 @@ export default class MessageQueue {
 
 	/**
 	 * Adds priority messages to the front of the queued messages
+	 * @deprecated
 	 */
 	handlePriority() {
 		let priority = [].concat(this.queued_priority);
@@ -49,6 +51,7 @@ export default class MessageQueue {
 	/**
 	 * Recursive function for sorting and handling messages.
 	 * @param {Number} [timeout=0] Time befire next recursion of message.
+	 * @deprecated
 	 */
 	handle(timeout = 0) {
 		setTimeout(() => {
@@ -139,6 +142,7 @@ export default class MessageQueue {
 	 * @param {String} opts.content
 	 * @param {MessageCallback} opts.callback
 	 * @param {Boolean} [opts.priority=false]
+	 * @deprecated
 	 */
 	async addToQueue(opts) {
 		let priority = opts.priority || false;
