@@ -133,3 +133,7 @@ Initial commit
 # 2.3.1
 
 -   Fixed `get_post_type` not using the client
+
+## 2.4.1
+
+-   **BREAKING!** Removed bearer and basic storing so that the library works without the 'os' module
