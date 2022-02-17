@@ -4,9 +4,8 @@
 import FreshObject from "./FreshObject.js";
 import Ban from "./small/Ban.js";
 import { paginator } from "../utils/methods.js";
-import ImagePost from "./small/ImagePost.js";
-import VideoPost from "./small/VideoPost.js";
-import CaptionPost from "./small/CaptionPost.js";
+
+import { get_post_type } from "../utils/methods.js";
 
 /**
  * @typedef {Object} UserStats
@@ -493,26 +492,41 @@ export default class User extends FreshObject {
 	 * Subscribes to the user
 	 * @return {Promise<User>} This instance
 	 */
-	async subscribe() {
+	// TODO Add docs for 'from' arg
+	async subscribe(from = null) {
 		await this.instance.request({
 			method: "PUT",
 			url: "/subscribers",
+			params: { from },
 		});
-
-		return this.fresh;
+		this._payload.is_subscription = true;
+		return this;
 	}
 
 	/**
 	 * Unsubscribes to the user
 	 * @return {Promise<User>} This instance
 	 */
-	async unsubscribe() {
+	async unsubscribe(from = null) {
 		await this.instance.request({
 			method: "DELETE",
 			url: "/subscribers",
+			params: { from },
 		});
-		return this.fresh;
+		this._payload.is_subscription = false;
+		return this;
 	}
+
+	// TODO Add updates subscribe and unsubscribe methods
+	/*
+	async subscribe_to_updates(from = null) {
+		await this.instance.request({
+			method: "PUT",
+			url: "updates_subcribers",
+			params: { from },
+		});
+	}
+	*/
 
 	/**
 	 * Paginates posts from the user's timeline
@@ -529,16 +543,7 @@ export default class User extends FreshObject {
 		});
 
 		for await (let post of each_post) {
-			if (post.type === "pic") {
-				yield new ImagePost(post.id, this.client, { data: post });
-			} else if (post.type === "video_clip") {
-				yield new VideoPost(post.id, this.client, { data: post });
-			} else if (post.type === "caption") {
-				yield new CaptionPost(post.id, this.client, { data: post });
-			} else {
-				console.log(post);
-				throw new Error(`Invalid post type: ${post.type} (${post.id})`);
-			}
+			yield get_post_type(post, this.client);
 		}
 	}
 }
