@@ -534,10 +534,8 @@ export default class User extends FreshObject {
 	 * @yields {Promise<ImagePost|VideoPost|CaptionPost>}
 	 */
 	async *timeline(limit = 30) {
-		let url = `/timelines/users/${await this.id}`;
-
 		let each_post = paginator(this.client, {
-			url: url,
+			url: `/timelines/users/${await this.id}`,
 			key: "content",
 			params: { limit },
 		});
