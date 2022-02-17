@@ -10,8 +10,6 @@ import {
 import { ApiError, CaptchaError, AuthError } from "../utils/exceptions.js";
 import Ban from "./small/Ban.js";
 import axios from "axios";
-import { homedir } from "os";
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
 import User from "./User.js";
 import Guest from "./small/Guest.js";
 import crypto from "crypto";
@@ -24,6 +22,8 @@ import VideoPost from "./small/VideoPost.js";
  * @property {string} [user_agent] User agent to make requests with
  * @property {string} [prefix] Prefix for the bot commands
  * @property {string} [token] Bearer token for the bot to use if you have one stored
+ * @property {string} [basic] Basic token for the bot to use if you have one stored
+ * @property {Object} [config] Config for the bot to use
  */
 
 /**
@@ -193,18 +193,21 @@ export default class Client extends Events {
 		 * Bearer token if stored in cache
 		 * @type {string|null}
 		 */
-		this._token = opts.token || null;
-
-		// Make sure that our config file exists and use it
-		if (!existsSync(`${homedir()}/.ifunnynode`)) {
-			mkdirSync(`${homedir()}/.ifunnynode`);
-		}
+		this._token = opts.token ?? null;
 
 		/**
-		 * Config path where tokens are stored
-		 * @type {string}
+		 * Basic token if stored in cache
+		 * @type {string|null}
 		 */
-		this._config_path = `${homedir()}/.ifunnynode/config.json`;
+		this._basic = opts.basic ?? null;
+
+		/**
+		 * Config for whatever you need to store within the client
+		 * @type {Object}
+		 */
+		this.config = opts.config ?? {};
+
+		// Make sure that our config file exists and use it
 
 		/**
 		 * The client's chat clinet instance
@@ -215,10 +218,9 @@ export default class Client extends Events {
 
 	/**
 	 * Client's on Event handler use {EventEmitter}
-	 * @param {('message'|'login')} event_name
+	 * @param {('login')} event_name
 	 * @param {{(...args: any): void}} listener
 	 * **Events:** \
-	 * `message`: `Message`\
 	 * `login`: `boolean`
 	 */
 	on(event_name, listener) {
@@ -235,7 +237,7 @@ export default class Client extends Events {
 	 */
 	async get(key, fallback = null) {
 		// Checks authorization before attempting a request
-		if (!this.authorized) {
+		if (!this.authorized || !this.bearer) {
 			throw new Error(`Client not authorized\nToken: ${this.bearer}`);
 		}
 
@@ -272,11 +274,7 @@ export default class Client extends Events {
 	 */
 	get config() {
 		if (!this._config) {
-			if (!existsSync(this._config_path)) {
-				writeFileSync(this._config_path, "{}");
-			}
-
-			this._config = JSON.parse(readFileSync(this._config_path).toString());
+			this._config = {};
 		}
 		return this._config;
 	}
@@ -290,7 +288,6 @@ export default class Client extends Events {
 			throw `value should be object, not ${typeof value}`;
 		}
 		this._config = value;
-		writeFileSync(this._config_path, JSON.stringify(value, null, 2));
 	}
 
 	/**
@@ -337,7 +334,7 @@ export default class Client extends Events {
 	 */
 	get headers() {
 		let auth = this.bearer || this.basic_token;
-		let type = this.authorized ? "Bearer " : "Basic ";
+		let type = this.bearer ? "Bearer " : "Basic ";
 		return {
 			"Ifunny-Project-Id": "iFunny",
 			"User-Agent": this.user_agent,
@@ -351,13 +348,13 @@ export default class Client extends Events {
 
 	/**
 	 * iFunny basic auth token\
-	 * If none is stored in this Client's config, one will be generated
+	 * If none is stored in this Client cache, one will be generated
 	 * @type {string}
 	 */
 	get basic_token() {
-		// Return stored basic token
-		if (this.config.basic_token && !this._update) {
-			return this.config.basic_token;
+		// Return cached basic token
+		if (this._basic && !this._update) {
+			return this._basic;
 		}
 
 		// Generate the token
@@ -369,8 +366,7 @@ export default class Client extends Events {
 		let c = crypto.createHash("sha1").update(b).digest("hex");
 		let auth = Buffer.from(a + c).toString("base64");
 
-		Object.assign(this._config, { basic_token: auth });
-		this.config = this._config;
+		this._basic = auth;
 		this._update = false;
 		return auth;
 	}
@@ -434,14 +430,6 @@ export default class Client extends Events {
 			throw new Error("email is required to login without a token");
 		}
 
-		// Get bearer from config file
-		if (this.config[`bearer ${opts.email}`] && !opts.force) {
-			this.bearer = this.config[`bearer ${opts.email}`];
-			await this._update_payload();
-			this.emit("login", false);
-			return this;
-		}
-
 		// Needs password to generate new bearer token
 		if (!opts.password) {
 			throw new Error("No stored token, password is required");
@@ -468,14 +456,12 @@ export default class Client extends Events {
 				data: data,
 			});
 
-			if (!response.data.access_token) {
+			if (!response?.data?.access_token) {
 				throw new Error("access_token not given");
 				//console.log(response.data);
 			}
 			// uses sette function
 			this.bearer = response.data.access_token;
-			this._config[`bearer ${opts.email}`] = this.bearer;
-			this.config = this._config;
 		} catch (error) {
 			//console.error(error?.data);
 			if (error.response.data.error === "captcha_required") {
