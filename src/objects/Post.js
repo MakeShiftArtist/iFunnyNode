@@ -450,7 +450,7 @@ export default class Post extends FreshObject {
 			return (
 				// match the content id regex
 				(await this.url)?.match(
-					/(?<=\/images\/|\/videos\/)([a-zA-Z0-9\_]+)(?=\.jpg$|\.webp$|\.mp4$)/
+					/(?<=\/images\/|\/videos\/)([a-zA-Z0-9\_]+)(?=\.jpg$|\.gif$|\.webp$|\.mp4$)/
 				)?.[0] ?? null // return the content id or null if undefined
 			);
 		})();
@@ -554,10 +554,11 @@ export default class Post extends FreshObject {
 	/**
 	 * Removes republish from post\
 	 * If you do this on the republished ID, the id will be made invalid
+	 * @return {Promise<this>}
 	 */
 	async unrepublish(from = null) {
 		if (!(await this.is_republished)) {
-			throw new Error(`Post (${await this.id}) is not republished`);
+			return this;
 		}
 		let { data } = await this.instance.request({
 			method: "DELETE",
@@ -592,7 +593,7 @@ export default class Post extends FreshObject {
 	 */
 	async unpin() {
 		if (!(await this.is_pinned)) {
-			throw new Error(`Post (${await this.id}) isn't pinned by the client`);
+			return this;
 		}
 
 		await this.instance.request({
@@ -602,4 +603,8 @@ export default class Post extends FreshObject {
 		this._payload.is_pinned = false;
 		return this;
 	}
+
+	// TODO Add post_comment method
+
+	// TODO Add comments generator
 }
