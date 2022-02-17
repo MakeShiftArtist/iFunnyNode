@@ -1,4 +1,6 @@
 // @ts-check
+import VideoPost from "../objects/small/VideoPost.js";
+import ImagePost from "../objects/small/ImagePost.js";
 
 import crypto from "crypto";
 import url from "url";
@@ -62,6 +64,8 @@ export async function* paginator(client, opts) {
 
 	let hasNext = false;
 
+	opts.params = opts.params ?? {};
+
 	do {
 		// Make request
 		let { data } = await client.instance.request({
@@ -89,9 +93,75 @@ export async function* paginator(client, opts) {
 	} while (hasNext);
 }
 
+/**
+ *
+ * @param {Client} client Client to make requests with
+ * @param {Object} opts
+ */
+export async function* post_body_paginator(client, opts) {
+	// Check required opts
+	if (!opts.url || typeof opts.url !== "string") {
+		throw new Error("No url provided");
+	}
+	if (!opts.key || typeof opts.key !== "string") {
+		throw new Error("opts.key must be a string");
+	}
+	opts.body = opts.body ?? {};
+
+	let hasNext = false;
+
+	do {
+		// Make request
+		let { data } = await client.instance.request({
+			method: "POST",
+			url: opts.url,
+			data: opts.body ?? {},
+		});
+
+		// Get iterable
+		let items = data?.data?.[opts.key]?.items;
+		if (!Array.isArray(items)) throw new Error(`Items not an array: ${items}`);
+
+		// Store next variable
+		hasNext = data?.data?.[opts.key]?.paging?.hasNext ?? false;
+		if (hasNext) {
+			opts.body.next = data.data[opts.key].paging.cursors.next;
+		}
+
+		for (let item of items) {
+			yield item;
+		}
+		/*
+		if (!hasNext) {
+			console.log(data.data);
+		}*/
+	} while (hasNext);
+}
+
+/**
+ * Returns the correct post class based on the post type
+ * @param {Object} post The post to return correct type of
+ * @param {Client} client
+ * @returns {ImagePost|VideoPost}
+ */
+export function get_post_type(post, client) {
+	if (!post) return null;
+	switch (post.type) {
+		case "caption":
+		case "pic":
+			return new ImagePost(post.id, this, { data: post });
+		case "video_clip":
+		case "gif":
+			return new VideoPost(post.id, this, { data: post });
+		default:
+			throw new Error(`Post (${post.id}: Invalid post type: ${post.type}`);
+	}
+}
+
 export default {
 	capitalize,
 	sleep,
 	create_basic_token,
 	paginator,
+	get_post_type,
 };
