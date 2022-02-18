@@ -94,7 +94,7 @@ export async function* paginator(client, opts) {
 }
 
 /**
- *
+ * Paginates data using `POST` method and body for `next` and `limit` key
  * @param {Client} client Client to make requests with
  * @param {Object} opts
  */
@@ -147,6 +147,7 @@ export async function* post_body_paginator(client, opts) {
 export function get_post_type(post, client) {
 	if (!post) return null;
 	switch (post.type) {
+		case "comics":
 		case "caption":
 		case "pic":
 			return new ImagePost(post.id, client, { data: post });
@@ -163,5 +164,6 @@ export default {
 	sleep,
 	create_basic_token,
 	paginator,
+	post_body_paginator,
 	get_post_type,
 };
