@@ -16,6 +16,8 @@ import crypto from "crypto";
 import Chats from "./Chats.js";
 import ImagePost from "./small/ImagePost.js";
 import VideoPost from "./small/VideoPost.js";
+import Comment from "./Comment.js";
+import Reply from "./small/Reply.js";
 
 /**
  * @typedef {Object} ClientOpts
@@ -900,20 +902,26 @@ export default class Client extends Events {
 	 */
 	async get_post(id) {
 		let { data } = await this.instance.request({
-			url: `${this.api}/content/${id}`,
+			url: `/content/${id}`,
 		});
 
-		let post = data.data;
-		switch (post.type) {
-			case "caption":
-			case "pic":
-				return new ImagePost(post.id, this, { data: post });
-			case "video_clip":
-			case "gif":
-				return new VideoPost(post.id, this, { data: post });
-			default:
-				throw new Error(`Post (${post.id}: Invalid post type: ${post.type}`);
+		return get_post_type(data.data, this);
+	}
+
+	/**
+	 * Gets a Comment or reply object from the Comment data
+	 * @param {Object} comment Comment data to retrieve comment object from
+	 * @returns {Promise<Reply|Comment>} Reply if comment is a reply, Comment otherwise
+	 */
+	async get_comment(comment) {
+		if (!comment?.id || !comment?.cid) {
+			throw new Error(`Comment (${typeof comment}) is invalid`);
 		}
+		comment = new Comment(comment, this);
+		if (await comment.is_reply) {
+			return new Reply(comment._payload, this);
+		}
+		return comment;
 	}
 
 	/**
@@ -974,15 +982,32 @@ export default class Client extends Events {
 	 * @param {number} limit
 	 */
 	async *collective(limit = 30) {
-		let url = `/feeds/collective`;
 		let coll_posts = post_body_paginator(this, {
-			url,
+			url: "/feeds/collective",
 			key: "content",
 			body: { limit },
 		});
 
 		for await (let post of coll_posts) {
 			yield get_post_type(post, this);
+		}
+	}
+
+	/**
+	 * Paginates comments by the client
+	 * @param {number} limit Number of comments per api request
+	 * @yields {Promise<ImagePost|VideoPost>}
+	 */
+	async *comments(limit = 30) {
+		let my_comms = paginator(this, {
+			url: "/users/my/comments",
+			key: "comments",
+			params: { limit },
+		});
+
+		for await (let comment of my_comms) {
+			//console.log(comment);
+			yield await this.get_comment(comment);
 		}
 	}
 }
