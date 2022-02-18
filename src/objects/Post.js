@@ -4,6 +4,8 @@
 import Client from "./Client.js";
 import FreshObject from "./FreshObject.js";
 import User from "./User.js";
+import Comment from "./Comment.js";
+import { paginator } from "../utils/methods.js";
 
 import url from "url";
 
@@ -606,5 +608,18 @@ export default class Post extends FreshObject {
 
 	// TODO Add post_comment method
 
-	// TODO Add comments generator
+	async *comments(limit = 50) {
+		let all_comms = paginator(this.client, {
+			url: `${this.request_url}`,
+			key: "comments",
+			params: { limit },
+		});
+
+		for await (let comment of all_comms) {
+			// Since this doesn't load replies, we can just use Comment
+			yield new Comment(comment.id, this.client, {
+				data: comment,
+			});
+		}
+	}
 }
