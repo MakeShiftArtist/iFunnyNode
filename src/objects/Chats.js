@@ -48,6 +48,18 @@ export default class Chats extends EventEmitter {
 	}
 
 	/**
+	 * Chat `on` Event handler, {EventEmitter}
+	 * @param {('message')} event_name
+	 * @param {{(...args: Context|any): void}} listener
+	 * **Events:** \
+	 * `message`: `Context`
+	 */
+	on(event_name, listener) {
+		super.on(event_name, listener);
+		return this;
+	}
+
+	/**
 	 * Connects to websocket using a Wampy socket instance and gets channels and invites
 	 * @returns {Promise<void>} An empty promise
 	 */
