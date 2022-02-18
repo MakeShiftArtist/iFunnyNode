@@ -1,15 +1,13 @@
-### 0.1.0
-
-Initial commit
+# 1.0.0 Initial commit
 
 -   Added `FreshObject` class
 -   Added `Client` class
 
-### 0.1.1
+## 1.1.0
 
 -   Added `Client.login` method
 
-# 1.2.0
+## 1.2.0
 
 -   Fixed `Client.login` method
 -   Added `CaptchaError` Error class
@@ -137,3 +135,12 @@ Initial commit
 ## 2.4.1
 
 -   **BREAKING!** Removed bearer and basic storing so that the library works without the 'os' module
+
+## 2.5.0
+
+-   Added `comics` case to `get_post_type`
+-   Added `comments()` generator to `Post`
+-   Added `Comment.js` and `Reply.js`
+-   Added `comments()` generator to `Client`
+-   Added `get_comment` function to `Client`
+-   Added `Chats.on` documentation
