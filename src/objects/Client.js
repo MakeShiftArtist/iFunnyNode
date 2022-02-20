@@ -1,12 +1,7 @@
 // @ts-check
 
 import Events from "events"; // allows for events like 'on_message'
-import {
-	sleep,
-	paginator,
-	get_post_type,
-	post_body_paginator,
-} from "../utils/methods.js";
+import { sleep, paginator, post_body_paginator } from "../utils/methods.js";
 import { ApiError, CaptchaError, AuthError } from "../utils/exceptions.js";
 import Ban from "./small/Ban.js";
 import axios from "axios";
@@ -896,16 +891,43 @@ export default class Client extends Events {
 	}
 
 	/**
-	 * Gets a post object by Id
-	 * @param {string} id Id of the post to retrieve
+	 * Gets a post object by data or id
+	 * @param {object|string} post Post data or id of the post to retrieve
 	 * @returns {Promise<ImagePost|VideoPost>}
 	 */
-	async get_post(id) {
-		let { data } = await this.instance.request({
-			url: `/content/${id}`,
-		});
+	async get_post(post = null) {
+		if (!["string", "object"].includes(typeof post)) {
+			throw new TypeError("post must be a string or an object");
+		}
 
-		return get_post_type(data.data, this);
+		let data;
+
+		if (typeof post === "string") {
+			let response = await this.instance.request({
+				url: `/content/${post}`,
+			});
+			if (!response?.data?.data) return null;
+			data = response.data.data;
+		} else if (typeof post === "object" && post?.id && post?.type) {
+			data = post;
+		} else {
+			throw new TypeError(
+				"post must be a string or an object with id and type properties"
+			);
+		}
+
+		switch (data?.type) {
+			case "comics":
+			case "caption":
+			case "pic":
+				return new ImagePost(data.id, this, { data });
+			case "video_clip":
+			case "vine":
+			case "gif":
+				return new VideoPost(data.id, this, { data });
+			default:
+				throw new Error(`Post (${post.id}: Invalid post type: ${post?.type}`);
+		}
 	}
 
 	/**
@@ -917,11 +939,11 @@ export default class Client extends Events {
 		if (!comment?.id || !comment?.cid) {
 			throw new Error(`Comment (${typeof comment}) is invalid`);
 		}
-		comment = new Comment(comment, this);
+		let comm = new Comment(comment, this);
 		if (await comment.is_reply) {
-			return new Reply(comment._payload, this);
+			return new Reply(comm._payload, this);
 		}
-		return comment;
+		return comm;
 	}
 
 	/**
@@ -973,7 +995,7 @@ export default class Client extends Events {
 		});
 
 		for await (let post of feat_posts) {
-			yield get_post_type(post, this);
+			yield await this.get_post(post);
 		}
 	}
 
@@ -989,7 +1011,7 @@ export default class Client extends Events {
 		});
 
 		for await (let post of coll_posts) {
-			yield get_post_type(post, this);
+			yield await this.get_post(post);
 		}
 	}
 
