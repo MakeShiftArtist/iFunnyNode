@@ -2,7 +2,6 @@
 
 import FreshObject from "./FreshObject.js";
 import User from "./User.js";
-import { get_post_type } from "../utils/methods.js";
 
 /**
  * @typedef {import("./Client.js").default} Client
@@ -79,7 +78,7 @@ export default class Comment extends FreshObject {
 	get post() {
 		return (async () => {
 			let post = await this.get("content");
-			return get_post_type(post, this.client);
+			return await this.client.get_post(post);
 		})();
 	}
 
@@ -156,7 +155,7 @@ export default class Comment extends FreshObject {
 				attch?.giphy?.[0];
 
 			if (!post) return null;
-			return get_post_type(post, this.client);
+			return await this.client.get_post(post);
 		})();
 	}
 
@@ -179,7 +178,7 @@ export default class Comment extends FreshObject {
 
 	/**
 	 * Object with smile, unsmile, and reply count
-	 * @type {Promise<Object}
+	 * @type {Promise<Object>}
 	 */
 	get nums() {
 		return this.get("nums", {});
