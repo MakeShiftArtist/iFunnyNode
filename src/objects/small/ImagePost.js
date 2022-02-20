@@ -8,6 +8,8 @@ import Post from ".././Post.js";
  * @property {String} [url='/content/{content_id}'] The url to make requests to
  */
 
+/** @typedef {import('../Client.js').default} Client */
+
 /**
  * iFunny Image Post Object with more specific functions for images
  * @extends Post
@@ -16,7 +18,7 @@ import Post from ".././Post.js";
 export default class ImagePost extends Post {
 	/**
 	 * @param {String} id
-	 * @param {import("../Client.js").default} client
+	 * @param {Client} client
 	 * @param {PostOpts} opts
 	 */
 	constructor(id, client, opts = {}) {
@@ -29,7 +31,7 @@ export default class ImagePost extends Post {
 	 */
 	get webp_url() {
 		return (async () => {
-			return (await this.get("url")).replace(/\.jpg$/g, ".webp");
+			return (await this.data)?.webp_url ?? null;
 		})();
 	}
 
@@ -39,11 +41,7 @@ export default class ImagePost extends Post {
 	 * @type {Promise<String|null>}
 	 */
 	get detected_text() {
-		return (async () => {
-			if ((await this.get("type")) === "pic") {
-				return await this.get("ocr_text");
-			} else return null;
-		})();
+		return this.ocr_text;
 	}
 
 	/**
@@ -51,13 +49,18 @@ export default class ImagePost extends Post {
 	 * @type {Promise<String|null>}
 	 */
 	get ocr_text() {
-		return this.detected_text;
+		return (async () => {
+			let types = ["pic", "caption", "comics"];
+			if (types.includes(await this.type)) {
+				return await this.get("ocr_text");
+			} else return null;
+		})();
 	}
 
 	/**
 	 * Content url with the iFunny watermark cropped out
 	 * @example
-	 * 'https://imageproxy.ifunny.co/crop:x-20/images/{content_id}.{jpg|webp}'
+	 * 'https://imageproxy.ifunny.co/crop:x-20/images/{content_id}.jpg'
 	 * @type {Promise<String|null>}
 	 */
 	get cropped_url() {
@@ -69,7 +72,7 @@ export default class ImagePost extends Post {
 	}
 
 	/**
-	 * The images caption
+	 * The images caption, if Caption
 	 * @type {Promise<string>}
 	 */
 	get caption() {
