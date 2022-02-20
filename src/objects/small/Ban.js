@@ -5,6 +5,7 @@ import FreshObject from "../FreshObject.js";
 /**
  * Represents an iFunny Ban Object
  * @extends FreshObject
+ * @see {@link Ban}
  */
 export default class Ban extends FreshObject {
 	/**
@@ -49,7 +50,19 @@ export default class Ban extends FreshObject {
 	 */
 	get date_until() {
 		return (async () => {
-			return new Date(await this.get("date_until"));
+			let time = await this.get("date_until");
+			return time ? new Date(time * 1000) : null;
+		})();
+	}
+
+	/**
+	 * How much time is left for the ban to expire
+	 * @type {Promise<Date>}
+	 */
+	get time_left() {
+		return (async () => {
+			let time = await this.date_until;
+			return time ? new Date(time.getTime() - new Date().getTime()) : null;
 		})();
 	}
 
