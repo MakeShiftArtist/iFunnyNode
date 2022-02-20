@@ -8,7 +8,10 @@ import EventEmitter from "events"; // allows for events like 'on_message'
  * @property {string} [url] The url to make requests to
  */
 
-/** @typedef {import("./Client.js").default} Client */
+/**
+ * @typedef {import("./Client.js").default} Client
+ * @typedef {import('axios').AxiosInstance} AxiosInstance
+ */
 
 /**
  * Base object that all other objects will inherit
@@ -52,7 +55,7 @@ export default class FreshObject extends EventEmitter {
 		 * Payload of the object gotten from the request
 		 * @type {Object}
 		 */
-		this._payload = opts.data || {};
+		this._payload = opts.data || { id };
 
 		/**
 		 * Should we force a new data request for the object?
@@ -63,7 +66,7 @@ export default class FreshObject extends EventEmitter {
 
 		/**
 		 * Shortcut for {@link Client.instance}
-		 * @type {import('axios').AxiosInstance}
+		 * @type {AxiosInstance}
 		 */
 		this.instance = this.client.instance;
 	}
