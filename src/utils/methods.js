@@ -138,32 +138,10 @@ export async function* post_body_paginator(client, opts) {
 	} while (hasNext);
 }
 
-/**
- * Returns the correct post class based on the post type
- * @param {Object} post The post to return correct type of
- * @param {Client} client
- * @returns {ImagePost|VideoPost}
- */
-export function get_post_type(post, client) {
-	if (!post) return null;
-	switch (post.type) {
-		case "comics":
-		case "caption":
-		case "pic":
-			return new ImagePost(post.id, client, { data: post });
-		case "video_clip":
-		case "gif":
-			return new VideoPost(post.id, client, { data: post });
-		default:
-			throw new Error(`Post (${post.id}: Invalid post type: ${post.type}`);
-	}
-}
-
 export default {
 	capitalize,
 	sleep,
 	create_basic_token,
 	paginator,
 	post_body_paginator,
-	get_post_type,
 };
