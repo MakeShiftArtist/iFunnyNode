@@ -86,7 +86,7 @@
 
 ## 2.1.0
 
--   Added `Channel.me` which returns the client's ChatUser object for that channel
+-   Added `Channel.me` which returns the Client's ChatUser object for that channel
 -   Fixed: `Channel.listen()` and `Channel.stop_listening()` now work properly
 -   Temporary Fix: `Channel.send()` now works, but isn't using the built in message handler
 -   Improved documentation for `Channel.js`
@@ -130,7 +130,7 @@
 
 # 2.3.1
 
--   Fixed `get_post_type` not using the client
+-   Fixed `get_post_type` not using the Client
 
 ## 2.4.1
 
@@ -144,3 +144,16 @@
 -   Added `comments()` generator to `Client`
 -   Added `get_comment` function to `Client`
 -   Added `Chats.on` documentation
+
+## 2.5.1
+
+-   Changed `Client.get_post()` to accept post data or post id
+-   Removed `get_post_type` function from `methods.js`, use `Client.get_post()` instead
+-   Improved Documentation for `ImagePost.js`
+-   Fixed getters for `VideoPost` so that they work with Gifs and vines
+-   Fixed timestamp for `Guest.visited_at`
+-   Fixed timestamps for `Ban.date_until` and `Ban.time_left`
+-   Fixed the ID not automatically being added to the payload in `FreshObject.js`
+-   Improved Documentation for `Post.js` and added `is_mine` getter and `fetch()` method
+-   `User.timeline()` yields a post from `Client.get_post()` instead of the deprecated method
+-   `Comment.post` and `Comment.attachment` use `Client.get_post()` instead of the deprecated method
