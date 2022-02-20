@@ -31,6 +31,6 @@ export default class Guest extends User {
 	 * @type {Date|null}
 	 */
 	get visited_at() {
-		return this._timestamp ? new Date(this._timestamp) : null;
+		return this._timestamp ? new Date(this._timestamp * 1000) : null;
 	}
 }
