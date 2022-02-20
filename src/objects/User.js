@@ -5,8 +5,6 @@ import FreshObject from "./FreshObject.js";
 import Ban from "./small/Ban.js";
 import { paginator } from "../utils/methods.js";
 
-import { get_post_type } from "../utils/methods.js";
-
 /**
  * @typedef {Object} UserStats
  * @property {Number} subscriptions Amount of subscriptions the user has
@@ -56,11 +54,15 @@ import { get_post_type } from "../utils/methods.js";
  * @property {String} [url] The url to make requests to
  */
 
+/** @typedef {import('./Client.js').default} Client */
+
+/**
+ * Represents an iFunny User. Other UserObjects will inherit this one
+ */
 export default class User extends FreshObject {
 	/**
-	 * User Object
 	 * @param {string} id Id of the user
-	 * @param {import("./Client.js").default} client Client the user is attached to
+	 * @param {Client} client Client the user is attached to
 	 * @param {FreshOpts} [opts={}] Optional data
 	 */
 	constructor(id, client, opts = {}) {
@@ -541,7 +543,7 @@ export default class User extends FreshObject {
 		});
 
 		for await (let post of each_post) {
-			yield get_post_type(post, this.client);
+			yield this.client.get_post(post);
 		}
 	}
 }
