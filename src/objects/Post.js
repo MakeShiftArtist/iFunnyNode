@@ -1,13 +1,20 @@
 // @ts-check
-"use strict";
 
-import Client from "./Client.js";
 import FreshObject from "./FreshObject.js";
 import User from "./User.js";
 import Comment from "./Comment.js";
 import { paginator } from "../utils/methods.js";
 
 import url from "url";
+
+/** @typedef {'prof'|'feat'|'coll'|'my-smiles'|'reads'} From */
+
+/**
+ * @typedef {import('./small/ImagePost.js').default} ImagePost
+ * @typedef {import('./small/VideoPost.js').default} VideoPost
+ */
+
+/** @typedef {import('./Client.js').default} Client */
 
 /**
  * @typedef {Object} PostOpts
@@ -106,6 +113,16 @@ export default class Post extends FreshObject {
 	}
 
 	/**
+	 * The data of the Post's type
+	 * @type {Promise<Object>}
+	 */
+	get data() {
+		return (async () => {
+			return this.get(await this.type);
+		})();
+	}
+
+	/**
 	 * Sharable link to the post
 	 * @type {Promise<string>}
 	 */
@@ -130,7 +147,15 @@ export default class Post extends FreshObject {
 	}
 
 	/**
-	 * Type of post (`video_clip` or `pic`)
+	 * Type of post\
+	 * **VideoPost**\
+	 * `video_clip` Standard video\
+	 * `vine` Video from Vine url\
+	 * `gif` Gif format\
+	 * **ImagePost**\
+	 * `pic` Standard Image\
+	 * `caption` Image with caption\
+	 * `comics` A comic post
 	 * @type {Promise<string>}
 	 */
 	get type() {
@@ -155,7 +180,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Tags attatched to the post
-	 * @type {Promise<Array<string>>}
+	 * @type {Promise<string[]>}
 	 */
 	get tags() {
 		return this.get("tags", []);
@@ -193,8 +218,8 @@ export default class Post extends FreshObject {
 	 */
 	get created_at() {
 		return (async () => {
-			let time = await this.get("created_at");
-			return time ? new Date(time) : null;
+			let time = await this.get("date_create");
+			return time ? new Date(time * 1000) : null;
 		})();
 	}
 
@@ -205,7 +230,7 @@ export default class Post extends FreshObject {
 	get published_at() {
 		return (async () => {
 			let published = (await this.get("state")) === "published";
-			return published ? new Date(await this.get("published_at")) : null;
+			return published ? new Date((await this.get("published_at")) * 1000) : null;
 		})();
 	}
 
@@ -216,7 +241,7 @@ export default class Post extends FreshObject {
 	get issue_at() {
 		return (async () => {
 			let featured = await this.get("is_featured");
-			return featured ? new Date(await this.get("issue_at")) : null;
+			return featured ? new Date((await this.get("issue_at")) * 1000) : null;
 		})();
 	}
 
@@ -408,9 +433,8 @@ export default class Post extends FreshObject {
 	}
 
 	/**
-	 * Original Source of the content, if any\
-	 * Not sure what the copywright object looks like, when I find out I will document it
-	 * @type {Promise<Object>}
+	 * Original Source of the content, if any
+	 * @type {Promise<{note?: string, url?: string}>} If the source is instagram, this note will be their insta handle
 	 */
 	get copywright() {
 		return this.get("copyright", {});
@@ -461,13 +485,33 @@ export default class Post extends FreshObject {
 	/**
 	 * Return the original source of the post if it is a republish\
 	 * If it's not a republish, it returns itself
-	 * @type {Promise<Post>}
+	 * @type {Promise<ImagePost|VideoPost>}
 	 */
 	get source() {
 		return (async () => {
 			let origin = await this.get("source");
-			return origin ? new Post(origin.id, this.client, origin) : this;
+			if (!origin) origin = this._payload;
+			return this.client.get_post(this._payload);
 		})();
+	}
+
+	/**
+	 * Is the post author the client?
+	 * @type {Promise<boolean>}
+	 */
+	get is_mine() {
+		return (async () => {
+			return (await this.author).is_me;
+		})();
+	}
+
+	/**
+	 * Fetches the full Post type\
+	 * Use this if you want to automatically convert to the correct type
+	 * @returns {Promise<ImagePost|VideoPost>}
+	 */
+	async fetch() {
+		return await this.client.get_post(await this.id);
 	}
 
 	/**
@@ -550,7 +594,7 @@ export default class Post extends FreshObject {
 			url: `${this.request_url}/republished`,
 			params: new url.URLSearchParams({ from }),
 		});
-		return this.client.get_post(data.data.id);
+		return this.client.get_post(data.data);
 	}
 
 	/**
