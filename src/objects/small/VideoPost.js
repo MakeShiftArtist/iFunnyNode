@@ -3,14 +3,6 @@
 import Post from ".././Post.js";
 
 /**
- * @typedef {Object} VideoClip
- * @property {string} screen_url Jpeg format
- * @property {number} bytes Amount of bytes the video is
- * @property {string} source_type The source type of the content
- * @property {number} duration How long the video is in seconds
- */
-
-/**
  * @typedef {Object} PostOpts
  * @property {Object} [data={}] The data received from the server
  * @property {string} [url='/content/{content_id}'] The url to make requests to
@@ -124,6 +116,7 @@ export default class VideoPost extends Post {
 
 	/**
 	 * The logo url of the video if available
+	 * @type {Promise<string|null>}
 	 */
 	get logo_url() {
 		return (async () => {

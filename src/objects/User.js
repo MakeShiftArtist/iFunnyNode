@@ -3,58 +3,24 @@
 
 import FreshObject from "./FreshObject.js";
 import Ban from "./small/Ban.js";
-import { paginator } from "../utils/methods.js";
+import { paginator, meme_xp } from "../utils/methods.js";
+
+/** @typedef {import('./Client.js').default} Client */
 
 /**
- * @typedef {Object} UserStats
- * @property {Number} subscriptions Amount of subscriptions the user has
- * @property {Number} subscribers Amount of subcribers the user has
- * @property {Number} total_posts Amount of total posts the user has
- * @property {Number} created Amount of created posts the user has
- * @property {Number} featured Amount of features the user has
- * @property {Number} total_smiles Amount of total smiles the user has
- * @property {Number} achievements Amount of achievements the user has
- */
-
-/**
- * @typedef {Object} ProfilePicture
- * @property {String} bg_color Background color of the profile picture
- * @property {Object} thumb Thumbnail urls of the profile picture
- * @property {String} thumb.small_url small url of the thumbnail 100x
- * @property {String} thumb.medium_url medium url of the thumbnail 200x
- * @property {String} thumb.large_url large url of the thumbnail 400x
- * @property {String} url URL of the profile picture
- */
-
-/**
- * @typedef {Object} CoverImage
- * @property {String} url URL of the cover image
- * @property {String} bg_color Background color of the cover image
- */
-
-/**
- * @typedef {Object} MemeExperience
- * @property {Number} days Amount of days the user has
- * @property {String} rank The rank of the user
- * @property {Badge} badge The badge the user's rank
- * @property {Number} next_milestone Amount of days the user needs to get the next rank
- */
-
-/**
- * @typedef {Object} Badge
- * @property {String} url URL of the badge
- * @property {Object} size Size of the badge
- * @property {Number} size.w Width of the badge
- * @property {Number} size.h Height of the badge
+ * @typedef {import('../utils/types').MemeExperience} MemeExperience
+ * @typedef {import('../utils/types').ProfilePicture} ProfilePicture
+ * @typedef {import('../utils/types').UserStats} UserStats
+ * @typedef {import('../utils/types').CoverImage} CoverImage
+ * @typedef {import('../utils/types').SeenFrom} SeenFrom
+ *
  */
 
 /**
  * @typedef {Object} FreshOpts
  * @property {Object} [data={}] The data received from the server
- * @property {String} [url] The url to make requests to
+ * @property {string} [url] The url to make requests to
  */
-
-/** @typedef {import('./Client.js').default} Client */
 
 /**
  * Represents an iFunny User. Other UserObjects will inherit this one
@@ -72,7 +38,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Get a user by their id
-	 * @param {String} id Nick of the user to get
+	 * @param {string} id Nick of the user to get
 	 * @return {Promise<User|null>} The user found for this nick, or null if no such user
 	 */
 	async by_id(id) {
@@ -112,7 +78,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Get a user by their nickname
-	 * @param {String} nick Nick of the user to get
+	 * @param {string} nick Nick of the user to get
 	 * @return {Promise<User|null>} The user found for this nick, or null if no such user
 	 */
 	async by_nick(nick) {
@@ -155,7 +121,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Nick of the user
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get nick() {
 		return this.get("nick");
@@ -163,7 +129,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Id of the user
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get id() {
 		return (async () => {
@@ -214,7 +180,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Number of subscribers to this user
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get subscriber_count() {
 		return (async () => {
@@ -224,7 +190,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Number of users this user is subscribed to
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get subscription_count() {
 		return (async () => {
@@ -234,7 +200,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Number of posts in this user's timeline
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get post_count() {
 		return (async () => {
@@ -244,7 +210,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Number of posts that are original in this user's timeline
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get original_post_count() {
 		return (async () => {
@@ -254,7 +220,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Number of posts that are republications in this user's timeline
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get republication_count() {
 		return (async () => {
@@ -264,7 +230,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Number of featured posts in this user's timeline
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get feature_count() {
 		return (async () => {
@@ -274,7 +240,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Total number of smiles accross all comments and posts by this user
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get smile_count() {
 		return (async () => {
@@ -284,7 +250,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Number of achievements obtained by this user
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get achievement_count() {
 		return (async () => {
@@ -311,24 +277,13 @@ export default class User extends FreshObject {
 	get meme_experience() {
 		return (async () => {
 			let xp = await this.get("meme_experience", {});
-			return {
-				days: xp?.days ?? 0,
-				next_milestone: xp?.next_milestone ?? null,
-				rank: xp?.rank ?? "Meme Explorer",
-				badge: {
-					url: xp?.badge_url ?? "https://img.ifunny.co/meme_experience/0.png",
-					size: xp?.badge_size ?? {
-						w: 0,
-						h: 0,
-					},
-				},
-			};
+			return meme_xp(xp);
 		})();
 	}
 
 	/**
 	 * The user's iFunny rank
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get rank() {
 		return (async () => {
@@ -338,7 +293,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * The user's iFunny days
-	 * @type {Promise<Number>}
+	 * @type {Promise<number>}
 	 */
 	get days() {
 		return (async () => {
@@ -348,7 +303,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * How many days the user needs to get the next rank
-	 * @type {Promise<Number|null>}
+	 * @type {Promise<number|null>}
 	 */
 	get next_milestone() {
 		return (async () => {
@@ -358,7 +313,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * The user's iFunny badge
-	 * @type {Promise<Badge>}
+	 * @type {Promise<MemeExperience['badge']>}
 	 */
 	get badge() {
 		return (async () => {
@@ -385,7 +340,7 @@ export default class User extends FreshObject {
 	/**
 	 * The user's iFunny account link, which can be opened in iFunny\
 	 * Alias for {@link web_url User.web_url}
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get link() {
 		return this.web_url;
@@ -394,7 +349,7 @@ export default class User extends FreshObject {
 	/**
 	 * The user's iFunny account link, which can be opened in iFunny\
 	 * Alias for {@link web_url User.link}
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get web_url() {
 		return (async () => {
@@ -420,7 +375,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * The user's about (bio)
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get about() {
 		return this.get("about", "");
@@ -428,7 +383,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Alias for this.about
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get bio() {
 		return this.get("about", "");
@@ -476,7 +431,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * The user's nickname when the account was made
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get original_nick() {
 		return this.get("original_nick", this.nick);
@@ -484,7 +439,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * The user's nickname color
-	 * @type {Promise<String>}
+	 * @type {Promise<string>}
 	 */
 	get nick_color() {
 		return this.get("nick_color", "FFFFFF");
@@ -492,7 +447,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Subscribes to the user
-	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the user is being seen
+	 * @param {SeenFrom} [from] Where the user is being seen
 	 * @return {Promise<User>} This instance
 	 */
 	async subscribe(from = null) {
@@ -507,7 +462,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Unsubscribes to the user
-	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the user is being seen
+	 * @param {SeenFrom} [from] Where the user is being seen
 	 * @return {Promise<User>} This instance
 	 */
 	async unsubscribe(from = null) {

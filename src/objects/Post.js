@@ -7,8 +7,6 @@ import { paginator } from "../utils/methods.js";
 
 import url from "url";
 
-/** @typedef {'prof'|'feat'|'coll'|'my-smiles'|'reads'} From */
-
 /**
  * @typedef {import('./small/ImagePost.js').default} ImagePost
  * @typedef {import('./small/VideoPost.js').default} VideoPost
@@ -17,39 +15,18 @@ import url from "url";
 /** @typedef {import('./Client.js').default} Client */
 
 /**
+ * @typedef {import('../utils/types').SeenFrom} SeenFrom
+ * @typedef {import('../utils/types').Thumbnail} Thumbnail
+ * @typedef {import('../utils/types').PostNums} PostNums
+ * @typedef {import('../utils/types').Size} Size
+ * @typedef {import('../utils/types').PostData} PostData
+ * @typedef {import('../utils/types').PostType} PostType
+ */
+
+/**
  * @typedef {Object} PostOpts
  * @property {Object} [data={}] The data received from the server
  * @property {string} [url='/content/{content_id}'] The url to make requests to
- */
-
-/**
- * @typedef {Object} Thumbnail Watermark cropped at different sizes
- * @property {string} small_url Jpeg format, Square, Size 65x, Quality: 90x75
- * @property {string} url Jpeg format, Square, Size 160x, Quality: 90x75
- * @property {string} large_url Jpeg format, Square, Size 320x, Quality: 90x75
- * @property {string} x640_url Jpeg format, Size 640x Quality: 95x75
- * @property {string} webp_url Webp format, Square, Size 160x, Quality: 90
- * @property {string} large_webp_url Webp format, Square, Size 320x, Quality: 90
- * @property {string} proportional_url Jpeg format, Size 320x, Crop x800, Quality: 90x75
- * @property {string} proportional_webp_url Webp format, Size 320x, Crop, Quality: 90
- * @property {Size} proportional_size Proportional Size of the thumbnail
- */
-
-/**
- * @typedef {Object} PostStats
- * @property {Number=} smiles Amount of smiles the post has
- * @property {Number=} unsmiles Amount of unsmiles the post has
- * @property {Number=} guest_smiles Amount of guest smiles the post has
- * @property {Number=} comments Amount of comments the post has
- * @property {Number=} views Amount of views the post has
- * @property {Number=} republished Amount of republishes the user has
- * @property {Number=} shares Amount of shares the post has
- */
-
-/**
- * @typedef {Object} Size
- * @property {Number} w Width
- * @property {Number} h Height
  */
 
 /**
@@ -114,7 +91,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * The data of the Post's type
-	 * @type {Promise<Object>}
+	 * @type {Promise<PostData>}
 	 */
 	get data() {
 		return (async () => {
@@ -152,11 +129,12 @@ export default class Post extends FreshObject {
 	 * `video_clip` Standard video\
 	 * `vine` Video from Vine url\
 	 * `gif` Gif format\
+	 * `gif_caption` Gif with caption\
 	 * **ImagePost**\
 	 * `pic` Standard Image\
 	 * `caption` Image with caption\
 	 * `comics` A comic post
-	 * @type {Promise<string>}
+	 * @type {Promise<PostType>}
 	 */
 	get type() {
 		return this.get("type");
@@ -321,9 +299,9 @@ export default class Post extends FreshObject {
 	/**
 	 * The stats of the post
 	 * @see {@link PostStats}
-	 * @type {Promise<PostStats>}
+	 * @type {Promise<PostNums>}
 	 */
-	get stats() {
+	get nums() {
 		return this.get("nums", {});
 	}
 
@@ -333,7 +311,7 @@ export default class Post extends FreshObject {
 	 */
 	get smile_count() {
 		return (async () => {
-			return (await this.stats)?.smiles ?? 0;
+			return (await this.nums)?.smiles ?? 0;
 		})();
 	}
 
@@ -343,7 +321,7 @@ export default class Post extends FreshObject {
 	 */
 	get unsmile_count() {
 		return (async () => {
-			return (await this.stats)?.unsmiles ?? 0;
+			return (await this.nums)?.unsmiles ?? 0;
 		})();
 	}
 
@@ -354,7 +332,7 @@ export default class Post extends FreshObject {
 	 */
 	get guest_smiles() {
 		return (async () => {
-			return (await this.stats)?.guest_smiles ?? 0;
+			return (await this.nums)?.guest_smiles ?? 0;
 		})();
 	}
 
@@ -364,7 +342,7 @@ export default class Post extends FreshObject {
 	 */
 	get comment_count() {
 		return (async () => {
-			return (await this.stats)?.comments ?? 0;
+			return (await this.nums)?.comments ?? 0;
 		})();
 	}
 
@@ -374,7 +352,7 @@ export default class Post extends FreshObject {
 	 */
 	get view_count() {
 		return (async () => {
-			return (await this.stats)?.views ?? 0;
+			return (await this.nums)?.views ?? 0;
 		})();
 	}
 
@@ -384,7 +362,7 @@ export default class Post extends FreshObject {
 	 */
 	get republication_count() {
 		return (async () => {
-			return (await this.stats)?.republished ?? 0;
+			return (await this.nums)?.republished ?? 0;
 		})();
 	}
 
@@ -394,7 +372,7 @@ export default class Post extends FreshObject {
 	 */
 	get share_count() {
 		return (async () => {
-			return (await this.stats)?.shares;
+			return (await this.nums)?.shares;
 		})();
 	}
 
@@ -528,7 +506,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Smiles a post
-	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
+	 * @param {SeenFrom} [from] Where the post is being seen
 	 * @returns {Promise<this>}
 	 */
 	async smile(from = "prof") {
@@ -545,7 +523,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Removes the smile if the post is smiled
-	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
+	 * @param {SeenFrom} [from] Where the post is being seen
 	 * @returns {Promise<this>}
 	 */
 	async remove_smile(from = "prof") {
@@ -561,7 +539,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Unsmiles a post
-	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
+	 * @param {SeenFrom} [from] Where the post is being seen
 	 * @returns {Promise<this>}
 	 */
 	async unsmile(from = "prof") {
@@ -578,7 +556,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Removes an unsmile if the content is smiled
-	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
+	 * @param {SeenFrom} [from] Where the post is being seen
 	 * @returns {Promise<this>}
 	 */
 	async remove_unsmile(from = null) {
@@ -594,7 +572,7 @@ export default class Post extends FreshObject {
 
 	/**
 	 * Republishes a post
-	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
+	 * @param {SeenFrom} [from] Where the post is being seen
 	 * @returns {Promise<Post>}
 	 */
 	async republish(from = null) {
@@ -612,7 +590,7 @@ export default class Post extends FreshObject {
 	/**
 	 * Removes republish from post\
 	 * If you do this on the republished ID, the id will be made invalid
-	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
+	 * @param {SeenFrom} [from] Where the post is being seen
 	 * @return {Promise<this>}
 	 */
 	async unrepublish(from = null) {
