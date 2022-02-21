@@ -492,9 +492,9 @@ export default class User extends FreshObject {
 
 	/**
 	 * Subscribes to the user
+	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the user is being seen
 	 * @return {Promise<User>} This instance
 	 */
-	// TODO Add docs for 'from' arg
 	async subscribe(from = null) {
 		await this.instance.request({
 			method: "PUT",
@@ -507,6 +507,7 @@ export default class User extends FreshObject {
 
 	/**
 	 * Unsubscribes to the user
+	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the user is being seen
 	 * @return {Promise<User>} This instance
 	 */
 	async unsubscribe(from = null) {

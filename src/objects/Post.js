@@ -612,6 +612,7 @@ export default class Post extends FreshObject {
 	/**
 	 * Removes republish from post\
 	 * If you do this on the republished ID, the id will be made invalid
+	 * @param {'prof'|'feat'|'coll'|'my-smiles'|'reads'} [from] Where the post is being seen
 	 * @return {Promise<this>}
 	 */
 	async unrepublish(from = null) {
