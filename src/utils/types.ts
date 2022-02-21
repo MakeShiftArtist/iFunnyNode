@@ -90,4 +90,13 @@ export interface PostData {
 	logo_url?: string;
 }
 
+export type PostType =
+	| `video_clip`
+	| `vine`
+	| `gif`
+	| `gif_caption`
+	| `pic`
+	| `caption`
+	| `comics`;
+
 export type SeenFrom = "prof" | "feat" | "coll" | "my-smiles" | "reads";
