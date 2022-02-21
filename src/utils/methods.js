@@ -7,6 +7,7 @@ import url from "url";
 
 /**
  * @typedef {import('../objects/Client.js').default} Client
+ * @typedef {import('../utils/types').MemeExperience} MemeExperience
  */
 
 /**
@@ -138,10 +139,31 @@ export async function* post_body_paginator(client, opts) {
 	} while (hasNext);
 }
 
+/**
+ * Reduces badge data into it's own object
+ * @param {Object} experience Meme experience to format
+ * @returns {MemeExperience}
+ */
+export function meme_xp(experience) {
+	return {
+		days: experience?.days ?? 0,
+		next_milestone: experience?.next_milestone ?? null,
+		rank: experience?.rank ?? "Meme Explorer",
+		badge: {
+			url: experience?.badge_url ?? "https://img.ifunny.co/meme_experience/0.png",
+			size: experience?.badge_size ?? {
+				w: 0,
+				h: 0,
+			},
+		},
+	};
+}
+
 export default {
 	capitalize,
 	sleep,
 	create_basic_token,
 	paginator,
 	post_body_paginator,
+	meme_xp,
 };
