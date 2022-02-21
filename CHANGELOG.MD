@@ -145,7 +145,7 @@
 -   Added `get_comment` function to `Client`
 -   Added `Chats.on` documentation
 
-## 2.5.1
+### 2.5.1
 
 -   Changed `Client.get_post()` to accept post data or post id
 -   Removed `get_post_type` function from `methods.js`, use `Client.get_post()` instead
@@ -157,3 +157,17 @@
 -   Improved Documentation for `Post.js` and added `is_mine` getter and `fetch()` method
 -   `User.timeline()` yields a post from `Client.get_post()` instead of the deprecated method
 -   `Comment.post` and `Comment.attachment` use `Client.get_post()` instead of the deprecated method
+
+### 2.6.0
+
+-   Fixed `Client.instance.interceptors` not throwing errors
+-   `Client.get_post()` returns `null` if the request returned 'not_found'
+-   Added support for `FormData` in `Client.instance` requests
+-   Added `Client.request_password_reset()` function
+-   `Client._update_payload()` uses optional chaining to improve error handling
+-   Moved `ImagePost.caption` to `Post.js` since gif's can have captions too
+-   Fixed `Post.comments()` not using the `comments` path
+-   Added documentation for `Post.comments()`
+-   Added `Post.smiles()` generator and `Post.repubs()` generator
+-   Added `from` parameter documentation for `Post` and `User` methods
+-   Updated README.md
