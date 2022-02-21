@@ -496,6 +496,18 @@ export default class Post extends FreshObject {
 	}
 
 	/**
+	 * The Post's caption, if exists
+	 * @type {Promise<string>}
+	 */
+	get caption() {
+		return (async () => {
+			let type = await this.type;
+			if (!["caption", "gif_caption"].includes(type)) return null;
+			return (await this.get(type))?.caption_text ?? null;
+		})();
+	}
+
+	/**
 	 * Is the post author the client?
 	 * @type {Promise<boolean>}
 	 */
@@ -652,18 +664,51 @@ export default class Post extends FreshObject {
 
 	// TODO Add post_comment method
 
+	/**
+	 * Paginates the comments on this post
+	 * @param {number} limit The number of comments to return per api call
+	 */
 	async *comments(limit = 50) {
 		let all_comms = paginator(this.client, {
-			url: `${this.request_url}`,
+			url: `${this.request_url}/comments`,
 			key: "comments",
 			params: { limit },
 		});
 
 		for await (let comment of all_comms) {
 			// Since this doesn't load replies, we can just use Comment
-			yield new Comment(comment.id, this.client, {
-				data: comment,
-			});
+			yield new Comment(comment, this.client);
+		}
+	}
+
+	/**
+	 * Paginates the Users that smiled this post
+	 * @param {number} limit How many users to return per api call
+	 */
+	async *smiles(limit = 30) {
+		let smiles = paginator(this.client, {
+			url: `${this.request_url}/smiles`,
+			key: "users",
+			params: { limit },
+		});
+		for await (let user of smiles) {
+			yield new User(user.id, this.client, { data: user });
+		}
+	}
+
+	/**
+	 * Paginates the Users that republished this post
+	 * @param {number} limit The number of users to return per api call
+	 */
+	async *repubs(limit = 30) {
+		let repubs = paginator(this.client, {
+			url: `${this.request_url}/republished`,
+			key: "users",
+			params: { limit },
+		});
+
+		for await (let user of repubs) {
+			yield new User(user.id, this.client, { data: user });
 		}
 	}
 }
