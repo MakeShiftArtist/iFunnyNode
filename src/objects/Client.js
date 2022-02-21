@@ -1,7 +1,7 @@
 // @ts-check
 
 import Events from "events"; // allows for events like 'on_message'
-import { sleep, paginator, post_body_paginator } from "../utils/methods.js";
+import { sleep, paginator, post_body_paginator, meme_xp } from "../utils/methods.js";
 import { ApiError, CaptchaError, AuthError } from "../utils/exceptions.js";
 import Ban from "./small/Ban.js";
 import axios from "axios";
@@ -25,40 +25,10 @@ import FormData from "form-data";
  */
 
 /**
- * @typedef {Object} UserStats
- * @property {number} subscriptions Amount of subscriptions the user has
- * @property {number} subscribers Amount of subcribers the user has
- * @property {number} total_posts Amount of total posts the user has
- * @property {number} created Amount of created posts the user has
- * @property {number} featured Amount of features the user has
- * @property {number} total_smiles Amount of total smiles the user has
- * @property {number} achievements Amount of achievements the user has
- */
-
-/**
- * @typedef {Object} ProfilePicture
- * @property {string} bg_color Background color of the profile picture
- * @property {Object} thumb Thumbnail urls of the profile picture
- * @property {string} thumb.small_url small url of the thumbnail 100x
- * @property {string} thumb.medium_url medium url of the thumbnail 200x
- * @property {string} thumb.large_url large url of the thumbnail 400x
- * @property {string} url URL of the profile picture
- */
-
-/**
- * @typedef {Object} Level
- * @property {string} id Id of the level
- * @property {number} value Level rank (IE Level 1)
- * @property {number} points Amount of points needed to reach the level
- */
-
-/**
- * @typedef {Object} UserRating
- * @property {number} points Amount of points the user has
- * @property {Level} current_level The current level of the user
- * @property {Level} next_level The next level for the user
- * @property {Level} max_level The max level for the API (99)
- * @property {boolean} is_show_level Does the rating show on the user's profile? (Not enabled)
+ * @typedef {import('../utils/types').UserStats} UserStats
+ * @typedef {import('../utils/types').MemeExperience} MemeExperience
+ * @typedef {import('../utils/types').Rating} Rating
+ * @typedef {import('../utils/types').ProfilePicture} ProfilePicture
  */
 
 /**
@@ -91,14 +61,14 @@ export default class Client extends Events {
 
 		/**
 		 * Is the Client authorized for requests? (Has a valid bearer token)
-		 * @type {Boolean}
+		 * @type {boolean}
 		 */
 		this.authorized = false;
 
 		/**
 		 * Should the Client use cached data?
 		 * @private
-		 * @type {Boolean}
+		 * @type {boolean}
 		 */
 		this._update = false;
 
@@ -417,7 +387,7 @@ export default class Client extends Events {
 	 * @param {Object} [opts] Optional params for logging in
 	 * @param {string} [opts.email] Email of the Client to log in with
 	 * @param {string} [opts.password] Password to log in with, required if no bearer is stored
-	 * @param {Boolean} [opts.force=false] Force log in with email and password
+	 * @param {boolean} [opts.force=false] Force log in with email and password
 	 * @return {Promise<Client>} Itself after the login completes
 	 * @throws {@link CaptchaError}
 	 * @fires Client#login
@@ -568,7 +538,7 @@ export default class Client extends Events {
 	}
 
 	/**
-	 * Nick of the lient
+	 * Nick of the Client
 	 * @type {Promise<string|null>}
 	 */
 	get nick() {
@@ -577,7 +547,7 @@ export default class Client extends Events {
 
 	/**
 	 * Original nick of the Client
-	 * @type {Promise<string>}
+	 * @type {Promise<string|null>}
 	 */
 	get original_nick() {
 		return this.get("original_nick", this.nick);
@@ -624,7 +594,7 @@ export default class Client extends Events {
 	/**
 	 * The Client's account link that can be opened in iFunny\
 	 * Alias for {@link link Client.link}
-	 * @type {Promise<string>}
+	 * @type {Promise<string|null>}
 	 */
 	get web_url() {
 		return this.get("web_url");
@@ -632,7 +602,7 @@ export default class Client extends Events {
 
 	/**
 	 * The Client's profile picture
-	 * @type {Promise<ProfilePicture>}
+	 * @type {Promise<ProfilePicture|null>}
 	 */
 	get profile_picture() {
 		return this.get("photo");
@@ -649,7 +619,7 @@ export default class Client extends Events {
 	/**
 	 * Is this User available for chat?
 	 * You can't chat with yourself so this should always be false
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean|null>}
 	 */
 	get can_chat() {
 		return this.get("is_available_for_chat");
@@ -657,7 +627,7 @@ export default class Client extends Events {
 
 	/**
 	 * Is the Client User's account private?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get is_private() {
 		return this.get("is_private");
@@ -665,7 +635,7 @@ export default class Client extends Events {
 
 	/**
 	 * Has the Client used chats before?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get chat_active() {
 		return this.get("messenger_active");
@@ -682,7 +652,7 @@ export default class Client extends Events {
 
 	/**
 	 * Is the Client blocked from using chat?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get blocked_in_chats() {
 		return this.get("is_blocked_in_messenger");
@@ -691,7 +661,7 @@ export default class Client extends Events {
 	/**
 	 * Is the Client in safe mode?
 	 * Only sees memes approved by moderators
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get safe_mode() {
 		return this.get("safe_mode");
@@ -699,7 +669,7 @@ export default class Client extends Events {
 
 	/**
 	 * Is the Client an iFunny moderator?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get is_moderator() {
 		return this.get("is_moderator");
@@ -707,7 +677,7 @@ export default class Client extends Events {
 
 	/**
 	 * Is the Client an iFunny team member?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get is_staff() {
 		return this.get("is_ifunny_team_member");
@@ -715,7 +685,7 @@ export default class Client extends Events {
 
 	/**
 	 * Does the Client have unnotified bans?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get has_unnotified_bans() {
 		return this.get("have_unnotified_bans");
@@ -723,7 +693,7 @@ export default class Client extends Events {
 
 	/**
 	 * Does the Client have unnotified strikes?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get has_unnotified_strikes() {
 		return this.get("have_unnotified_strikes");
@@ -731,7 +701,7 @@ export default class Client extends Events {
 
 	/**
 	 * Does the Client have unnotified achievements?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get has_unnotified_achievements() {
 		return this.get("have_unnotified_achievements");
@@ -739,7 +709,7 @@ export default class Client extends Events {
 
 	/**
 	 * Does the Client have unnotified levels?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get has_unnotified_levels() {
 		return this.get("have_unnotified_levels");
@@ -747,7 +717,7 @@ export default class Client extends Events {
 
 	/**
 	 * Does the Client need to go through account setup?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get need_account_setup() {
 		return this.get("need_account_setup");
@@ -755,7 +725,7 @@ export default class Client extends Events {
 
 	/**
 	 * Is the Client verified?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get is_verified() {
 		return this.get("is_verified");
@@ -763,7 +733,7 @@ export default class Client extends Events {
 
 	/**
 	 * Is the Client banned?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get is_banned() {
 		return this.get("is_banned");
@@ -771,7 +741,7 @@ export default class Client extends Events {
 
 	/**
 	 * Is the Client's account deleted?
-	 * @type {Promise<Boolean>}
+	 * @type {Promise<boolean>}
 	 */
 	get is_deleted() {
 		return this.get("is_deleted");
@@ -891,10 +861,77 @@ export default class Client extends Events {
 
 	/**
 	 * Rating of the User (No longer used by iFunny)
-	 * @type {Promise<UserRating|null>}
+	 * @type {Promise<Rating|null>}
 	 */
 	get rating() {
 		return this.get("rating");
+	}
+
+	/**
+	 * The Client's profile photo
+	 * @type {Promise<ProfilePicture|null>}
+	 */
+	get profile_photo() {
+		return this.get("photo");
+	}
+
+	/**
+	 * Client's meme experience calculated by age of the account
+	 * @type {Promise<MemeExperience>}
+	 */
+	get meme_experience() {
+		return (async () => {
+			let xp = await this.get("meme_experience", {});
+			return meme_xp(xp);
+		})();
+	}
+
+	/**
+	 * The Client's iFunny rank
+	 * @type {Promise<string>}
+	 */
+	get rank() {
+		return (async () => {
+			return (await this.meme_experience).rank;
+		})();
+	}
+
+	/**
+	 * The Client's iFunny days
+	 * @type {Promise<number>}
+	 */
+	get days() {
+		return (async () => {
+			return (await this.meme_experience).days;
+		})();
+	}
+
+	/**
+	 * How many days the Client needs to get the next rank
+	 * @type {Promise<number|null>}
+	 */
+	get next_milestone() {
+		return (async () => {
+			return (await this.meme_experience).next_milestone;
+		})();
+	}
+
+	/**
+	 * The Client's iFunny badge
+	 * @type {Promise<MemeExperience['badge']>}
+	 */
+	get badge() {
+		return (async () => {
+			return (await this.meme_experience).badge;
+		})();
+	}
+
+	/**
+	 * The Client's nickname color
+	 * @type {Promise<string>}
+	 */
+	get nick_color() {
+		return this.get("nick_color", "FFFFFF");
 	}
 
 	/**
