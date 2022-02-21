@@ -70,15 +70,4 @@ export default class ImagePost extends Post {
 			return `https://imageproxy.ifunny.co/crop:x-20/images/${content_id}.jpg`;
 		})();
 	}
-
-	/**
-	 * The images caption, if Caption
-	 * @type {Promise<string>}
-	 */
-	get caption() {
-		return (async () => {
-			if ((await this.type) !== "caption") return null;
-			return (await this.get("caption"))?.caption_text ?? null;
-		})();
-	}
 }
