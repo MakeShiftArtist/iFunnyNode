@@ -1,9 +1,8 @@
-# iFunnyNode
+# iFunnyNode 2.6.0
 
 This is an iFunny API Wrapper written in ES6 Node JS.\
 This is in the early stages so most of the API hasn't been implemented yet.\
 Chats have been implemented! I couldn't have done it without the amazing help from my good friend [Tobi/Pain](https://github.com/baiinss)\
-**VERY EARLY STAGES**
 
 -   I'm writing this wrapper from scratch, taking inspiration from
     [discord.py](https://github.com/Rapptz/discord.py),
@@ -14,37 +13,7 @@ Chats have been implemented! I couldn't have done it without the amazing help fr
 ## Using the module
 
 The module was written in ES6, so you'll need to specify the type as `module` in `package.json` or change the extensions to `.mjs` instead of `.js`\
-To use the Client, you'll simply use `npm install ifunnynode` in your terminal, and import the client like so:
-
-```js
-// import your client
-import Client from "ifunnynode";
-
-// initalize client with bearer token and basic token
-const client = new Client({ token: "bearer_token", basic: "basic_token" });
-
-// Logging in doesn't need any args because we already have the token
-client.login();
-
-client.on("login", async (new_bearer) => {
-	// Almost every getter is async, so you'll have to await them. Refer to the docs for which don't need to be awaited
-	console.log(`Client logged in as ${await client.nick} (${client.id_sync})`);
-
-	// Connect to the chats websocket
-	client.chats.connect();
-});
-
-// THANK YOU @TOBI for all the help setting up chats. Couldn't have done it without you.
-client.chats.on("message", async (ctx) => {
-	// Ignore self
-	if (await (await ctx.message.author).is_me) {
-		return;
-	}
-
-	// Send a message in response
-	await ctx.channel.send("Message received!");
-});
-```
+To use the Client, you'll simply use `npm install ifunnynode` in your terminal
 
 ## Logging in
 
@@ -60,26 +29,31 @@ iFunny will sometimes return a captcha error, so you'll need to solve them
 ### Example
 
 ```js
-// imports the client and the User and Post Object.
-import Client, { User, Post } from "ifunnynode";
+import Client from "ifunnynode";
 
 // Get your credentials
-const IFUNNY_EMAIL = process.env.IFUNNY_NODE_EMAIL;
-const IFUNNY_PASSWORD = process.env.IFUNNY_NODE_PASSWORD;
+const EMAIL = process.env.IFUNNY_NODE_EMAIL;
+const PASSWORD = process.env.IFUNNY_NODE_PASSWORD;
+const BASIC_TOKEN = process.env.IFUNNY_BASIC_TOKEN;
 
-const client = new Client();
+const client = new Client({
+	basic: BASIC_TOKEN,
+});
 
+// Login event emits a boolean if it had to generate a new bearer token.
 client.on("login", async (new_bearer) => {
-	// Get a user by nickname
-	console.log(client.bearer); // bearer token attatched to client
+	console.log(`new bearer ${new_bearer}`);
+});
 
 (async () => {
 	try {
 		// The wrapper doesn't store the basic token, which needs to be reused to login, so you'll wanna store this before attempting a login
-		console.log(client.basic_token);
+		process.env.IFUNNY_BASIC_TOKEN = client.basic_token;
+
+		// Since we don't have a bearer token stored, we need to pass an email and a password
 		await client.login({
-			email: IFUNNY_EMAIL,
-			password: IFUNNY_PASSWORD,
+			email: EMAIL,
+			password: PASSWORD,
 		});
 	} catch (err) {
 		// check if error was CaptchaError
@@ -92,4 +66,59 @@ client.on("login", async (new_bearer) => {
 		}
 	}
 })();
+```
+
+## Basic command example
+
+```js
+// Import the Client from npm
+import Client from "ifunnynode";
+
+// Construct the client
+const client = new Client({
+	token: "bearer",
+	basic: "basic_token",
+});
+
+// Since we already have a bearer, we don't need to pass any arguments
+client.login();
+
+// On Client.login, execute a callback so that we know the client is valid
+client.on("login", async () => {
+	// Log info to the console (optional)
+	console.log(`Client logged in as ${await client.nick} (${client.id_sync})`);
+
+	// Connect to chats
+	client.chats.connect();
+});
+
+/**
+ * Gets the stats of the user and returns them as a string
+ * @param {User} user
+ */
+async function stats(user) {
+	let str = "";
+	str += `Total Posts: ${await user.post_count}\n`;
+	str += `Features: ${await user.feature_count}\n`;
+	str += `Total Smiles: ${await user.smile_count}\n`;
+	str += `Total Subscribers: ${await user.subscriber_count}\n`;
+	str += `Total Subscriptions: ${await user.subscription_count}`;
+	return str;
+}
+
+client.chats.on(
+	"message",
+	/** @param {Context} ctx */
+	async (ctx) => {
+		// Ignore self
+		if (ctx.message.author.is_me) return; // Bot will not respond to itself
+
+		//if (!ctx.message.author.is_me) return; // Bot will ONLY respond to itself
+
+		// Command with name "mystats" that sends the users profile stats
+		if (ctx.message.content === "!mystats") {
+			await ctx.channel.send(await stats(ctx.message.author)); // Send the user their stats
+		}
+	}
+);
 ```
