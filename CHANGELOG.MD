@@ -158,7 +158,7 @@
 -   `User.timeline()` yields a post from `Client.get_post()` instead of the deprecated method
 -   `Comment.post` and `Comment.attachment` use `Client.get_post()` instead of the deprecated method
 
-### 2.6.0
+## 2.6.0
 
 -   Fixed `Client.instance.interceptors` not throwing errors
 -   `Client.get_post()` returns `null` if the request returned 'not_found'
@@ -171,3 +171,10 @@
 -   Added `Post.smiles()` generator and `Post.repubs()` generator
 -   Added `from` parameter documentation for `Post` and `User` methods
 -   Updated README.md
+
+### 2.6.1
+
+-   Added `meme_xp()` to `methods.js`
+-   Added `types.ts` for Type Declaration
+-   Cleaned documentation for `User`, `Post`, `VideoPost`, and `Client`
+-   Added getters that were missing from client. IDK why I removed them.
