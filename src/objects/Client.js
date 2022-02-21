@@ -13,6 +13,7 @@ import ImagePost from "./small/ImagePost.js";
 import VideoPost from "./small/VideoPost.js";
 import Comment from "./Comment.js";
 import Reply from "./small/Reply.js";
+import FormData from "form-data";
 
 /**
  * @typedef {Object} ClientOpts
@@ -156,21 +157,28 @@ export default class Client extends Events {
 			},
 		});
 
+		// Request interceptors
+		this.instance.interceptors.request.use((config) => {
+			// Update headers for FormData requests
+			if (config.data instanceof FormData) {
+				Object.assign(config.headers, config.data.getHeaders());
+			}
+			return config;
+		});
+
+		// Reponse interceptors
+
 		this.instance.interceptors.response.use(
 			(response) => response,
 			(error) => {
-				if (error) {
-				} else if (
-					error?.response?.status === 408 ||
-					error?.code === "ECONNABORTED"
-				) {
+				if (error?.response?.status === 408 || error?.code === "ECONNABORTED") {
 					return Promise.reject(
 						new ApiError(
 							error,
 							`Timeout (${error.config.timeout}ms) Exceeded on url "${error.config.url}"`
 						)
 					);
-				} else return Promise.reject(new ApiError(error));
+				} else return Promise.reject(error);
 			}
 		);
 
@@ -396,10 +404,10 @@ export default class Client extends Events {
 
 			return this._payload;
 		} catch (error) {
-			let data = error.response.data;
-			if (data.error === "invalid_grant") {
+			let data = error?.response?.data;
+			if (data?.error === "invalid_grant") {
 				throw new ApiError(error, data.error_description);
-			} else throw error.response;
+			} else throw error?.response ?? error;
 		}
 	}
 
@@ -447,7 +455,6 @@ export default class Client extends Events {
 				method: "POST",
 				url: `/oauth2/token`,
 				headers: {
-					...this.headers,
 					"content-type": "application/x-www-form-urlencoded",
 				},
 				data: data,
@@ -900,33 +907,42 @@ export default class Client extends Events {
 			throw new TypeError("post must be a string or an object");
 		}
 
-		let data;
-
+		console.log(typeof post);
 		if (typeof post === "string") {
-			let response = await this.instance.request({
-				url: `/content/${post}`,
-			});
-			if (!response?.data?.data) return null;
-			data = response.data.data;
+			try {
+				let { data } = await this.instance.request({
+					url: `/content/${post}`,
+				});
+				if (!data?.data) return null;
+				post = data.data;
+			} catch (error) {
+				if (error?.response?.data?.error === "not_found") {
+					return null;
+				} else throw error;
+			}
 		} else if (typeof post === "object" && post?.id && post?.type) {
-			data = post;
 		} else {
 			throw new TypeError(
 				"post must be a string or an object with id and type properties"
 			);
 		}
 
-		switch (data?.type) {
+		switch (post?.type) {
 			case "comics":
 			case "caption":
 			case "pic":
-				return new ImagePost(data.id, this, { data });
+				return new ImagePost(post.id, this, { data: post });
 			case "video_clip":
 			case "vine":
 			case "gif":
-				return new VideoPost(data.id, this, { data });
+			case "gif_caption":
+				return new VideoPost(post.id, this, { data: post });
 			default:
-				throw new Error(`Post (${post.id}: Invalid post type: ${post?.type}`);
+				throw new Error(
+					`Post (${post?.id ?? post}): Invalid post type: (${
+						post?.type
+					})\n${post}`
+				);
 		}
 	}
 
@@ -1031,5 +1047,27 @@ export default class Client extends Events {
 			//console.log(comment);
 			yield await this.get_comment(comment);
 		}
+	}
+
+	/**
+	 * Request a password reset for iFunny's servers.\
+	 * Resetting a password will void all bearers attatched to the account\
+	 * Requesting a password reset under another account's email *will* work, but it sends the link to their email, not yours.\
+	 * Attempting this anyways, will likely result in account ban or bot detection!
+	 * @param {string} email Email of account to request password reset for.
+	 */
+	async request_password_reset(email = null) {
+		if (!email) email = await this.email;
+		let form = new FormData();
+		form.append("email", email);
+
+		let { data } = await this.instance.request({
+			method: "POST",
+			url: `${this.request_url}/password_change_request`,
+			headers: { "Content-Type": "application/x-www-form-urlencoded" },
+			data: form,
+		});
+
+		return data?.status === 200;
 	}
 }
