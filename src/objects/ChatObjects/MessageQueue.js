@@ -12,6 +12,7 @@
  */
 
 /**
+ * * MessageQueue has been deprecated. RateLimiting is now handled by the user
  * Message queuer and handler
  * @deprecated
  */
