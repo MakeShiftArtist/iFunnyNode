@@ -944,7 +944,7 @@ export default class Client extends Events {
 			throw new TypeError("post must be a string or an object");
 		}
 
-		console.log(typeof post);
+		//console.log(typeof post);
 		if (typeof post === "string") {
 			try {
 				let { data } = await this.instance.request({
@@ -992,17 +992,15 @@ export default class Client extends Events {
 		if (!comment?.id || !comment?.cid) {
 			throw new Error(`Comment (${typeof comment}) is invalid`);
 		}
-		let comm = new Comment(comment, this);
-		if (await comment.is_reply) {
-			return new Reply(comm._payload, this);
+		if (comment?.is_reply) {
+			return new Reply(comment, this);
 		}
-		return comm;
+		return new Comment(comment, this);
 	}
 
 	/**
 	 * Paginates {@link Guest Guests} from the client's guests
-	 * @param {number} limit Limit on number of guests per API call
-	 * @yields {Guest}
+	 * @param {number} [limit] Limit on number of guests per API call
 	 */
 	async *guests(limit = 30) {
 		let url = `/users/${await this.id}/guests`;
@@ -1036,8 +1034,8 @@ export default class Client extends Events {
 
 	/**
 	 * Paginates posts from the featured feed
-	 * @param {number} limit
-	 * @param {boolean} is_new
+	 * @param {number} limit Number of posts per api call
+	 * @param {boolean} is_new Honestly not sure what this does
 	 */
 	async *features(limit = 30, is_new = false) {
 		let url = `/feeds/featured`;
