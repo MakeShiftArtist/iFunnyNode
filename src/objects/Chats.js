@@ -5,6 +5,8 @@ import Context from "./ChatObjects/Context.js";
 import MessageQueue from "./ChatObjects/MessageQueue.js";
 import Channel from "./ChatObjects/Channel.js";
 
+/** @typedef {import('./Client.js').default} Client*/
+
 /**
  * Chat Client for using iFunny Chats via websockets
  * @extends EventEmitter
@@ -12,13 +14,13 @@ import Channel from "./ChatObjects/Channel.js";
 export default class Chats extends EventEmitter {
 	/**
 	 * Chats handler and client for iFunny
-	 * @param {import("./Client.js").default} client
+	 * @param {Client} client
 	 */
 	constructor(client) {
 		super();
 		/**
 		 * The Base Client the Chat Client is connected to
-		 * @type {import("./Client.js").default}
+		 * @type {Client}
 		 */
 		this.client = client;
 
@@ -26,7 +28,7 @@ export default class Chats extends EventEmitter {
 		 * The Chat Client's socket instance
 		 * @type {Socket}
 		 */
-		this.socket = new Socket(this, client.id, client.bearer);
+		this.socket = new Socket(this, client.id_sync, client.bearer);
 
 		/**
 		 * @private
@@ -42,7 +44,7 @@ export default class Chats extends EventEmitter {
 
 		/**
 		 * Timestamp of chat start so we know to ignore old messages
-		 * @type {Number}
+		 * @type {number}
 		 */
 		this.started_at = new Date().getTime();
 	}
@@ -132,8 +134,8 @@ export default class Chats extends EventEmitter {
 
 	/**
 	 * Sends a message to a channel
-	 * @param {import("./ChatObjects/Channel.js").default|String} channel
-	 * @param {String} content Message you want to send
+	 * @param {Channel|string} channel
+	 * @param {string} content Message you want to send
 	 * @returns {Promise<{[key: string]: any}>}
 	 */
 	async send_message(channel, content) {
@@ -150,7 +152,7 @@ export default class Chats extends EventEmitter {
 	// ! id is never called
 	// TODO Fix Chats.get_chat
 	/**
-	 * @param {String} id
+	 * @param {string} id
 	 * @param {Context} context
 	 * @returns {Promise<Channel>}
 	 */
