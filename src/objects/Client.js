@@ -102,7 +102,7 @@ export default class Client extends Events {
 		 */
 		this.user_agent =
 			opts.user_agent ||
-			"iFunny/7.18.1(1120212) Android/12 (samsung; SM-G996U; samsung)";
+			"iFunny/7.19.1(1120248) Android/12 (samsung; SM-G996U; samsung)";
 
 		/**
 		 * Prefix for the bot
