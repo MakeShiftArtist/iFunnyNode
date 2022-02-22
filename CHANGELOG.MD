@@ -193,3 +193,7 @@
 
 -   Fixed `Client.chats` initializing in the constructor, raising an error if a bearer is not passed
 -   Fixed chats initalizing socket with `Client.id` instead of `Client.id_sync`
+
+### 2.6.4
+
+-   Changed package.json['main'] to `src/index`
