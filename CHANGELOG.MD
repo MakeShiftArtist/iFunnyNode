@@ -182,3 +182,9 @@
 ### 2.6.2
 
 -   Updated `Client.user_agent`
+-   Improve speed of `Client.get_comment`
+-   Fixed `Comment.mentions` using the wrong ID for the User object
+-   Fixed `Comment.reply_count` returning the smile_count
+-   Fixed `Comment.author` not passing the author into the payload on construct
+-   Added `Comment.replies()` generator
+-   Removed `CaptionPost` from `src/index.js`
