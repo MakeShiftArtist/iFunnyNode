@@ -188,3 +188,8 @@
 -   Fixed `Comment.author` not passing the author into the payload on construct
 -   Added `Comment.replies()` generator
 -   Removed `CaptionPost` from `src/index.js`
+
+### 2.6.3
+
+-   Fixed `Client.chats` initializing in the constructor, raising an error if a bearer is not passed
+-   Fixed chats initalizing socket with `Client.id` instead of `Client.id_sync`
