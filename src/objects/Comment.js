@@ -2,6 +2,7 @@
 
 import FreshObject from "./FreshObject.js";
 import User from "./User.js";
+import { paginator } from "../utils/methods.js";
 
 /**
  * @typedef {import("./Client.js").default} Client
@@ -67,7 +68,7 @@ export default class Comment extends FreshObject {
 	get author() {
 		return (async () => {
 			let user = await this.get("user");
-			return user ? new User(user.id, this.client, user) : null;
+			return user ? new User(user.id, this.client, { data: user }) : null;
 		})();
 	}
 
@@ -171,7 +172,7 @@ export default class Comment extends FreshObject {
 				throw new Error(`mention_user returned non array: ${mention_user}`);
 			}
 			return mention_user.map(
-				(user) => new User(user.id, this.client, { data: user })
+				(user) => new User(user.user_id, this.client, { data: user })
 			);
 		})();
 	}
@@ -210,7 +211,7 @@ export default class Comment extends FreshObject {
 	 */
 	get reply_count() {
 		return (async () => {
-			return (await this.nums)?.smiles ?? 0;
+			return (await this.nums)?.replies ?? 0;
 		})();
 	}
 
@@ -222,5 +223,19 @@ export default class Comment extends FreshObject {
 		return this.get("content_thumbs");
 	}
 
-	// TODO Add reply generator function for commments
+	/**
+	 * Paginates the replies to the comment
+	 * @param {number} limit How many replies to be returned per api call
+	 */
+	async *replies(limit = 50) {
+		let replies = paginator(this.client, {
+			url: `${this.request_url}/replies`,
+			key: "replies",
+			params: { limit },
+		});
+
+		for await (let reply of replies) {
+			yield await this.client.get_comment(reply);
+		}
+	}
 }
