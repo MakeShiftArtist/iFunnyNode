@@ -185,10 +185,22 @@ export default class Client extends Events {
 		// Make sure that our config file exists and use it
 
 		/**
-		 * The client's chat clinet instance
-		 * @type {Chats}
+		 * The Client's cached chats object
+		 * @type {Chats|null}
+		 * @private
 		 */
-		this.chats = new Chats(this);
+		this._chats = this.id_sync ? new Chats(this) : null;
+	}
+
+	/**
+	 * The client chat client instance
+	 * @type {Chats}
+	 */
+	get chats() {
+		if (!this.bearer || !this.authorized) {
+			throw new Error("Can't create the Chat Client without bearer token or id");
+		}
+		return this._chats ?? new Chats(this);
 	}
 
 	/**
