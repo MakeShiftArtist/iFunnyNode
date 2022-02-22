@@ -128,11 +128,11 @@
 -   Added `Comment.js`
 -   Added `Client.features` and `Client.collective` generators
 
-# 2.3.1
+### 2.3.1
 
 -   Fixed `get_post_type` not using the Client
 
-## 2.4.1
+## 2.4.0
 
 -   **BREAKING!** Removed bearer and basic storing so that the library works without the 'os' module
 
@@ -178,3 +178,7 @@
 -   Added `types.ts` for Type Declaration
 -   Cleaned documentation for `User`, `Post`, `VideoPost`, and `Client`
 -   Added getters that were missing from client. IDK why I removed them.
+
+### 2.6.2
+
+-   Updated `Client.user_agent`
