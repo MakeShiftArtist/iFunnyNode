@@ -1,0 +1,8 @@
+node_modules
+
+*test.js
+*.code-workspace
+config.json
+api_test.js
+.github/*
+src/*
