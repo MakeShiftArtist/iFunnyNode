@@ -210,3 +210,13 @@
 -   Fixed `CaptchaError.captcha_url` not working
 -   Added `Sex`, `PrivacyStatus`, and `EditProfileConfig` types
 -   Added `Client.edit_profile()` method
+
+# 3.0.0 BABEL UPDATE
+
+The library is now using babel to publish the package to NPM, as well as Typescript to generate .d.ts files for full typescript support.
+
+-   Fixed documentation for a few files
+-   Added `.npmignore`
+-   Added `.babelrc`
+-   Added `tsconfig.json`
+-   Compiled the module into ES2016, with .d.ts files for full typescript support
