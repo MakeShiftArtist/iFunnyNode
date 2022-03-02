@@ -224,3 +224,7 @@ The library is now using babel to publish the package to NPM, as well as Typescr
 ### 3.0.1
 
 -   Fix typescript typings
+
+### 3.0.2
+
+-   Attempt 2 at fixing typescript support
