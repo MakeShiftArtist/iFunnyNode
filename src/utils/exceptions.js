@@ -42,7 +42,7 @@ export class CaptchaError extends ApiError {
 		 * Captcha url that needs to be solved by the user
 		 * @type {String}
 		 */
-		this.captcha_url = this.data.data.captcha_url;
+		this.captcha_url = error?.response?.data?.data?.captcha_url;
 	}
 }
 
