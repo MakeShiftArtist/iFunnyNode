@@ -101,3 +101,18 @@ export type PostType =
 	| `comics`;
 
 export type SeenFrom = "prof" | "feat" | "coll" | "my-smiles" | "reads";
+
+type Sex = "male" | "female" | "other";
+
+export type PrivacyStatus = "public" | "subscribers" | "closed";
+
+export interface EditProfileConfig {
+	nick?: string;
+	about?: string;
+	location?: string;
+	hometown?: string;
+	sex?: Sex;
+	birth_date?: Date | string;
+	is_private?: boolean | 0 | 1;
+	messaging_privacy_status?: PrivacyStatus;
+}
