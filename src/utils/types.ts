@@ -82,6 +82,7 @@ export interface PostData {
 	duration?: number;
 	screen_url?: string;
 	source_type?: string;
+	caption_text?: string;
 	mp4_url?: string;
 	mp4_bytes?: number;
 	webm_bytes?: number;

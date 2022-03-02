@@ -481,7 +481,7 @@ export default class Post extends FreshObject {
 		return (async () => {
 			let type = await this.type;
 			if (!["caption", "gif_caption"].includes(type)) return null;
-			return (await this.get(type))?.caption_text ?? null;
+			return (await this.data)?.caption_text ?? null;
 		})();
 	}
 
