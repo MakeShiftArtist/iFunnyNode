@@ -54,7 +54,7 @@ export function create_basic_token(client_id, client_secret) {
  * @param {string} opts.url URL to request in the paginator
  * @param {string} opts.key Key to request in the paginator
  * @param {Object|url.URLSearchParams} [opts.params] Parameters for the api requests
- * @yields {Promise<any>}
+ * @yields {Promise<unknown>}
  */
 export async function* paginator(client, opts) {
 	// Check required opts
