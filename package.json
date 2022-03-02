@@ -1,7 +1,7 @@
 {
 	"name": "ifunnynode",
 	"type": "module",
-	"version": "3.0.1",
+	"version": "3.0.2",
 	"description": "Api wrapper for IFunny.mobi in Node.js",
 	"main": "dist/src/index",
 	"typings": "dist/src/index",
