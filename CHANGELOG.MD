@@ -204,3 +204,9 @@
 -   `create_basic_token` now takes in `client_id` and `client_secret` params instead of hard coded credentials
 -   `Client.basic_token` getter now uses `create_basic_token` function
 -   Fix `Post.caption` method and `PostData` interface
+
+### 2.6.6
+
+-   Fixed `CaptchaError.captcha_url` not working
+-   Added `Sex`, `PrivacyStatus`, and `EditProfileConfig` types
+-   Added `Client.edit_profile()` method
