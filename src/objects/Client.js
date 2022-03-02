@@ -36,6 +36,8 @@ import FormData from "form-data";
  * @typedef {import('../utils/types').MemeExperience} MemeExperience
  * @typedef {import('../utils/types').Rating} Rating
  * @typedef {import('../utils/types').ProfilePicture} ProfilePicture
+ * @typedef {import('../utils/types').EditProfileConfig} EditProfileConfig
+ * @typedef {import('../utils/types').PrivacyStatus} PrivacyStatus
  */
 
 /**
@@ -212,10 +214,12 @@ export default class Client extends Events {
 
 	/**
 	 * Client's on Event handler use {EventEmitter}
-	 * @param {('login')} event_name
-	 * @param {{(...args: any): void}} listener
-	 * **Events:** \
+	 * @param {('login'|'profile_edited')} event_name Name of the event to listen for
+	 * @param {{(...args: any): void}} listener Callback function to execute when event is fired
+	 *
+	 * @example
 	 * `login`: `boolean`
+	 * `profile_edited`: EditProfileConfig
 	 */
 	on(event_name, listener) {
 		super.on(event_name, listener);
@@ -440,12 +444,10 @@ export default class Client extends Events {
 
 			if (!response?.data?.access_token) {
 				throw new Error("access_token not given");
-				//console.log(response.data);
 			}
 			// uses sette function
 			this.bearer = response.data.access_token;
 		} catch (error) {
-			//console.error(error?.data);
 			if (error.response.data.error === "captcha_required") {
 				throw new CaptchaError(error);
 			} else if (error.response.data.error === "too_many_user_auths") {
@@ -562,7 +564,7 @@ export default class Client extends Events {
 	 * `public` allows anyone to open a chat with the User\
 	 * `subscribers` only allows subscribers to open a chat with the User\
 	 * `closed` doesn't allow anyone to open a chat with the User
-	 * @type {Promise<string|null>}
+	 * @type {Promise<PrivacyStatus|null>}
 	 */
 	get chat_privacy() {
 		return this.get("messaging_privacy_status");
@@ -948,7 +950,6 @@ export default class Client extends Events {
 			throw new TypeError("post must be a string or an object");
 		}
 
-		//console.log(typeof post);
 		if (typeof post === "string") {
 			try {
 				let { data } = await this.instance.request({
@@ -1083,7 +1084,6 @@ export default class Client extends Events {
 		});
 
 		for await (let comment of my_comms) {
-			//console.log(comment);
 			yield await this.get_comment(comment);
 		}
 	}
@@ -1108,5 +1108,66 @@ export default class Client extends Events {
 		});
 
 		return data?.status === 200;
+	}
+
+	/**
+	 *
+	 * @param {EditProfileConfig} opts
+	 * @returns
+	 */
+	async edit_profile(opts = {}) {
+		let info = { ...opts };
+
+		// These are in every request
+		info.is_private = opts.is_private ?? (await this.is_private) ? 1 : 0;
+		info.messaging_privacy_status =
+			opts.messaging_privacy_status ?? (await this.chat_privacy);
+
+		// These are optional
+		if (opts.sex) info.sex = opts.sex;
+		if (opts.nick) info.nick = opts.nick;
+		if (opts.about) info.about = opts.about;
+		if (opts.birth_date) {
+			let date;
+			if (typeof opts.birth_date === "string") {
+				let bday_regex = /\d{4}-\d{2}-\d{2}/i;
+				if (!bday_regex.test(opts.birth_date)) {
+					throw new Error("Birthdate must be in yyyy-mm-dd format");
+				}
+				date = opts.birth_date;
+			} else if (opts.birth_date instanceof Date) {
+				date = opts.birth_date.toISOString().split("T")[0];
+			}
+			info.birth_date = date;
+		}
+		if (opts.hometown) info.hometown = opts.hometown;
+		if (opts.location) info.location = opts.location;
+
+		let data = Object.keys(info)
+			.map((key) => `${key}=${info[key]}`)
+			.join("&");
+
+		try {
+			let response = await this.instance.request({
+				method: "PUT",
+				url: this.request_url,
+				data,
+			});
+			if (response?.data?.status === 200) {
+				Object.assign(this._payload, info);
+				this.emit("profile_edited", info);
+			}
+			throw new Error(JSON.stringify(response?.data, null, 2));
+		} catch (error) {
+			if (error?.response?.data?.error === "captcha_required") {
+				throw new CaptchaError(error);
+			} else if (error?.response?.data?.error === "wrong_params") {
+				// thrown if the request had bad parameters
+				//Example, About with discord.gg in it
+				throw new Error(JSON.stringify(error?.response?.data, null, 2));
+			} else if (error?.response?.data?.error === "forbidden") {
+				throw new Error(error?.response?.data?.error_description);
+			} else throw error;
+		}
 	}
 }
