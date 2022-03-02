@@ -13,7 +13,6 @@ import { paginator, meme_xp } from "../utils/methods.js";
  * @typedef {import('../utils/types').UserStats} UserStats
  * @typedef {import('../utils/types').CoverImage} CoverImage
  * @typedef {import('../utils/types').SeenFrom} SeenFrom
- *
  */
 
 /**
@@ -48,9 +47,7 @@ export default class User extends FreshObject {
 
 		if (id === this.id_sync) {
 			if (this._update) {
-				return new User(this.id_sync, this.client, {
-					url: this.request_url,
-				});
+				return new User(this.id_sync, this.client);
 			} else return this;
 		}
 
@@ -87,9 +84,8 @@ export default class User extends FreshObject {
 		}
 
 		if (nick.toLowerCase() === (await this.nick).toLowerCase()) {
-			return new User(this.id_sync, this.client, {
-				url: this.request_url,
-			});
+			if (!this._update) return this;
+			return new User(await this.id, this.client, { data: this._payload });
 		}
 		try {
 			let response = await this.instance.request({
