@@ -34,13 +34,15 @@ export function sleep(seconds) {
  * Creates a basic token for iFunny requests\
  * Basic auth tokens MUST be `156` characters long
  * Basic auth tokens *should* also be made using UUIDv4
+ * @param {string} client_id Client installation Id for the basic token
+ * @param {string} client_secret Client installation secret for the basic token
  * @returns {string} The basic auth token
  */
-export function create_basic_token() {
+export function create_basic_token(client_id, client_secret) {
 	let uuid = crypto.randomUUID().replace(/\-/g, "");
 	let hex = crypto.createHash("sha256").update(uuid).digest("hex").toUpperCase();
-	let a = hex + "_MsOIJ39Q28:";
-	let b = hex + ":MsOIJ39Q28:PTDc3H8a)Vi=UYap";
+	let a = hex + `_${client_id}:`;
+	let b = hex + `:${client_id}:${client_secret}`;
 	let c = crypto.createHash("sha1").update(b).digest("hex");
 	return Buffer.from(a + c).toString("base64");
 }
