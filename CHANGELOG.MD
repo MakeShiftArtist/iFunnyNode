@@ -203,3 +203,4 @@
 -   Changed how `Client.user` works due to it making requests to the '/account' endpoint instead of the user endpoint
 -   `create_basic_token` now takes in `client_id` and `client_secret` params instead of hard coded credentials
 -   `Client.basic_token` getter now uses `create_basic_token` function
+-   Fix `Post.caption` method and `PostData` interface
