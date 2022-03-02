@@ -1,0 +1,14 @@
+{
+	"include": ["src/**/*.js"],
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"moduleResolution": "node",
+		"target": "es2016",
+		"allowJs": true,
+		"allowSyntheticDefaultImports": true,
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"outDir": "dist",
+		"skipLibCheck": true
+	}
+}
