@@ -3,8 +3,8 @@
 	"type": "module",
 	"version": "3.0.2",
 	"description": "Api wrapper for IFunny.mobi in Node.js",
-	"main": "dist/src/index",
-	"typings": "dist/src/index",
+	"main": "dist/index",
+	"typings": "dist/index",
 	"scripts": {
 		"test": "mocha --recursive --parallel",
 		"build": "babel ./src -d dist && npx tsc"
