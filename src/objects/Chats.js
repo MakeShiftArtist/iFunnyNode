@@ -21,12 +21,14 @@ export default class Chats extends EventEmitter {
 		/**
 		 * The Base Client the Chat Client is connected to
 		 * @type {Client}
+		 * @readonly
 		 */
 		this.client = client;
 
 		/**
 		 * The Chat Client's socket instance
 		 * @type {Socket}
+		 * @readonly
 		 */
 		this.socket = new Socket(this, client.id_sync, client.bearer);
 
@@ -136,7 +138,7 @@ export default class Chats extends EventEmitter {
 	 * Sends a message to a channel
 	 * @param {Channel|string} channel
 	 * @param {string} content Message you want to send
-	 * @returns {Promise<{[key: string]: any}>}
+	 * @returns {Promise<{[key: string]: unknown}>}
 	 */
 	async send_message(channel, content) {
 		let name = channel?.name || channel;

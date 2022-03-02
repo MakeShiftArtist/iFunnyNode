@@ -54,15 +54,15 @@ export default class Client extends Events {
 
 		/**
 		 * Client Id for creating the basic token
-		 * @private
 		 * @type {string}
+		 * @protected
 		 */
 		this._client_id = opts?.client_id ?? "MsOIJ39Q28";
 
 		/**
 		 * Client secret for creating the basic token
-		 * @private
 		 * @type {string}
+		 * @protected
 		 */
 		this._client_secret = opts?.client_secret ?? "PTDc3H8a)Vi=UYap";
 
@@ -76,22 +76,22 @@ export default class Client extends Events {
 
 		/**
 		 * Should the Client use cached data?
-		 * @private
 		 * @type {boolean}
+		 * @protected
 		 */
 		this._update = false;
 
 		/**
 		 * Cached payload from request
-		 * @private
 		 * @type {Object}
+		 * @protected
 		 */
 		this._payload = {};
 
 		/**
 		 * Client's cached user object
-		 * @private
 		 * @type {User}
+		 * @private
 		 */
 		this._user = new User(null, this);
 
@@ -99,6 +99,7 @@ export default class Client extends Events {
 		 * Url for this.get
 		 * Only change if you know what you're doing
 		 * @type {string}
+		 * @protected
 		 */
 		this.request_url = `/account`;
 
@@ -176,12 +177,14 @@ export default class Client extends Events {
 		/**
 		 * Bearer token if stored in cache
 		 * @type {string|null}
+		 * @protected
 		 */
 		this._token = opts.token ?? null;
 
 		/**
 		 * Basic token if stored in cache
 		 * @type {string|null}
+		 * @protected
 		 */
 		this._basic = opts.basic ?? null;
 
@@ -189,14 +192,14 @@ export default class Client extends Events {
 		 * Config for whatever you need to store within the client
 		 * @type {Object}
 		 */
-		this.config = opts.config ?? {};
+		this._config = opts.config ?? {};
 
 		// Make sure that our config file exists and use it
 
 		/**
 		 * The Client's cached chats object
 		 * @type {Chats|null}
-		 * @private
+		 * @protected
 		 */
 		this._chats = this.id_sync ? new Chats(this) : null;
 	}
@@ -215,7 +218,7 @@ export default class Client extends Events {
 	/**
 	 * Client's on Event handler use {EventEmitter}
 	 * @param {('login'|'profile_edited')} event_name Name of the event to listen for
-	 * @param {{(...args: any): void}} listener Callback function to execute when event is fired
+	 * @param {{(...args: unknown[]): void}} listener Callback function to execute when event is fired
 	 *
 	 * @example
 	 * `login`: `boolean`
