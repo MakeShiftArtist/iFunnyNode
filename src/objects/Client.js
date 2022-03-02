@@ -1,13 +1,18 @@
 // @ts-check
 
 import Events from "events"; // allows for events like 'on_message'
-import { sleep, paginator, post_body_paginator, meme_xp } from "../utils/methods.js";
+import {
+	sleep,
+	paginator,
+	post_body_paginator,
+	meme_xp,
+	create_basic_token,
+} from "../utils/methods.js";
 import { ApiError, CaptchaError, AuthError } from "../utils/exceptions.js";
 import Ban from "./small/Ban.js";
 import axios from "axios";
 import User from "./User.js";
 import Guest from "./small/Guest.js";
-import crypto from "crypto";
 import Chats from "./Chats.js";
 import ImagePost from "./small/ImagePost.js";
 import VideoPost from "./small/VideoPost.js";
@@ -22,6 +27,8 @@ import FormData from "form-data";
  * @property {string} [token] Bearer token for the bot to use if you have one stored
  * @property {string} [basic] Basic token for the bot to use if you have one stored
  * @property {Object} [config] Config for the bot to use
+ * @property {string} [client_id] Client installation id for basic token generation
+ * @property {string} [client_secret] Client installation secret for basic token generation
  */
 
 /**
@@ -48,14 +55,14 @@ export default class Client extends Events {
 		 * @private
 		 * @type {string}
 		 */
-		this._client_id = "MsOIJ39Q28";
+		this._client_id = opts?.client_id ?? "MsOIJ39Q28";
 
 		/**
 		 * Client secret for creating the basic token
 		 * @private
 		 * @type {string}
 		 */
-		this._client_secret = "PTDc3H8a)Vi=UYap";
+		this._client_secret = opts?.client_secret ?? "PTDc3H8a)Vi=UYap";
 
 		// Data updated by methods
 
@@ -84,7 +91,7 @@ export default class Client extends Events {
 		 * @private
 		 * @type {User}
 		 */
-		this._user = new User(null, this, { url: this.request_url });
+		this._user = new User(null, this);
 
 		/**
 		 * Url for this.get
@@ -343,16 +350,8 @@ export default class Client extends Events {
 		if (this._basic && !this._update) {
 			return this._basic;
 		}
-
 		// Generate the token
-		// ? Basic tokens must be made using UUIDv4, and must be 156 characters long
-		let uuid = crypto.randomUUID().replace(/\-/g, "");
-		let hex = crypto.createHash("sha256").update(uuid).digest("hex").toUpperCase();
-		let a = hex + `_${this._client_id}:`;
-		let b = hex + `:${this._client_id}:${this._client_secret}`;
-		let c = crypto.createHash("sha1").update(b).digest("hex");
-		let auth = Buffer.from(a + c).toString("base64");
-
+		let auth = create_basic_token(this._client_id, this._client_secret);
 		this._basic = auth;
 		this._update = false;
 		return auth;
@@ -379,10 +378,7 @@ export default class Client extends Events {
 			Object.assign(this._payload, response.data.data);
 
 			// Update user payload
-			this._user = new User(this.id_sync, this, {
-				data: this._payload,
-				url: this.request_url,
-			});
+			Object.assign(this.user._payload, this._payload);
 
 			return this._payload;
 		} catch (error) {
@@ -457,8 +453,6 @@ export default class Client extends Events {
 			} else throw error;
 		}
 
-		await sleep(5); // Primes bearer
-
 		await this._update_payload();
 		this.emit("login", true);
 		return this;
@@ -495,13 +489,11 @@ export default class Client extends Events {
 	 * @type {User}
 	 */
 	get user() {
-		if (!!this._user.id_sync && !this._update) {
+		if (!!this._user?.id_sync && !this._update) {
 			return this._user;
 		}
-		this._user = new User(this.id_sync, this, {
-			data: this._payload,
-			url: this.request_url,
-		});
+		this._user.id_sync = this.id_sync;
+		Object.assign(this._user._payload, this._payload);
 		if (this._update) this._user._update = true;
 		this._update = false;
 
