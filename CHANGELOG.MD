@@ -220,3 +220,7 @@ The library is now using babel to publish the package to NPM, as well as Typescr
 -   Added `.babelrc`
 -   Added `tsconfig.json`
 -   Compiled the module into ES2016, with .d.ts files for full typescript support
+
+### 3.0.1
+
+-   Fix typescript typings
