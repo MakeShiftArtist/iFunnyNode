@@ -221,18 +221,11 @@ The library is now using babel to publish the package to NPM, as well as Typescr
 -   Added `tsconfig.json`
 -   Compiled the module into ES2016, with .d.ts files for full typescript support
 
-### 3.0.1
+### 3.0.1-4
 
--   Attempt 1 at fixing TypeScript support
+-   Attempt at fixing TypeScript support before learning `npm link` :|
 
-### 3.0.2
+### 3.0.5
 
--   Attempt 2 at fixing TypeScript support
-
-### 3.0.3
-
--   Attempt 3 at fixing TypeScript support
-
-### 3.0.4
-
--   Attempt 4 at fixing TypeScript support
+-   **BREAKING CHANGE!** Cloned repos and src code repos will need to add `type: "module"` into `package.json`
+-   Actually makes the module usable from npm installed package in CommonJs and TypeScript
