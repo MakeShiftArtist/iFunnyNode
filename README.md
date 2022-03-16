@@ -1,14 +1,15 @@
-# iFunnyNode 2.6.0
+# iFunnyNode 3.0.6
 
 This is an iFunny API Wrapper written in ES6 Node JS.\
-This is in the early stages so most of the API hasn't been implemented yet.\
-Chats have been implemented! I couldn't have done it without the amazing help from my good friend [Tobi/Pain](https://github.com/baiinss)\
+This project is nearly complete, with only a few features not implemented.\
+**Chats have been implemented!**\
+I couldn't have done it without the amazing help from my good friend [Tobi/Pain](https://github.com/baiinss) so big thanks to him for everything having to do with Chats.\
 
--   I'm writing this wrapper from scratch, taking inspiration from
+-   This wrapper was written from scratch, taking inspiration from
     [discord.py](https://github.com/Rapptz/discord.py),
     [discord.js](https://github.com/discordjs/discord.js),
     [ifunnyapi](https://github.com/EamonTracey/ifunnyapi),
-    and [iFunny.js](https://github.com/gastrodon/iFunny.js)
+    and [iFunny.js](https://github.com/gastrodon/iFunny.js). iFunny.js played a huge role in developing this client, so the author of that was listed as a contributer.
 
 ## Using the module
 
@@ -34,8 +35,16 @@ import Client from "ifunnynode";
 // Get your credentials
 const EMAIL = process.env.IFUNNY_NODE_EMAIL;
 const PASSWORD = process.env.IFUNNY_NODE_PASSWORD;
-const BASIC_TOKEN = process.env.IFUNNY_BASIC_TOKEN;
+const BASIC_TOKEN = process.env.IFUNNY_BASIC_TOKEN ?? new Client().basic_token; // If you don't have a basic token stored, generate one like so
 
+/**
+ * The wrapper doesn't store the basic token,
+ * which needs to be reused to login,
+ * so you'll wanna store this before attempting a login
+ */
+process.env.IFUNNY_BASIC_TOKEN = BASIC_TOKEN;
+
+// It's a good idea to use the same basic token unless you need to switch, for captcha requests
 const client = new Client({
 	basic: BASIC_TOKEN,
 });
@@ -47,9 +56,6 @@ client.on("login", async (new_bearer) => {
 
 (async () => {
 	try {
-		// The wrapper doesn't store the basic token, which needs to be reused to login, so you'll wanna store this before attempting a login
-		process.env.IFUNNY_BASIC_TOKEN = client.basic_token;
-
 		// Since we don't have a bearer token stored, we need to pass an email and a password
 		await client.login({
 			email: EMAIL,
@@ -59,7 +65,7 @@ client.on("login", async (new_bearer) => {
 		// check if error was CaptchaError
 		if (err.captcha_url) {
 			// Open this url in the browser and solve it, then make the request again, using the same basic token
-			console.log(captcha_url);
+			console.log(err.captcha_url);
 		} else {
 			// NOT a CaptchaError
 			throw err;
@@ -115,6 +121,7 @@ client.chats.on(
 
 		//if (!ctx.message.author.is_me) return; // Bot will ONLY respond to itself
 
+		// This isn't how you *should* handle it, but how you *can* handle it.
 		// Command with name "mystats" that sends the users profile stats
 		if (ctx.message.content === "!mystats") {
 			await ctx.channel.send(await stats(ctx.message.author)); // Send the user their stats

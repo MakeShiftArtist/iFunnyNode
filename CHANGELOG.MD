@@ -229,3 +229,7 @@ The library is now using babel to publish the package to NPM, as well as Typescr
 
 -   **BREAKING CHANGE!** Cloned repos and src code repos will need to add `type: "module"` into `package.json`
 -   Actually makes the module usable from npm installed package in CommonJs and TypeScript
+
+### 3.0.6
+
+-   Added example documentation for `Client.basic_token`
