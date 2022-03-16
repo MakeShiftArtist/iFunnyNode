@@ -232,4 +232,8 @@ The library is now using babel to publish the package to NPM, as well as Typescr
 
 ### 3.0.6
 
--   Added example documentation for `Client.basic_token`
+-   Added example documentation for `Client.basic_token` in `README.md`
+
+### 3.0.7
+
+-   Updated `README.md` to reflect the latest version

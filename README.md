@@ -1,4 +1,4 @@
-# iFunnyNode 3.0.6
+# iFunnyNode 3.0.7
 
 This is an iFunny API Wrapper written in ES6 Node JS.\
 This project is nearly complete, with only a few features not implemented.\
@@ -9,14 +9,70 @@ I couldn't have done it without the amazing help from my good friend [Tobi/Pain]
     [discord.py](https://github.com/Rapptz/discord.py),
     [discord.js](https://github.com/discordjs/discord.js),
     [ifunnyapi](https://github.com/EamonTracey/ifunnyapi),
-    and [iFunny.js](https://github.com/gastrodon/iFunny.js). iFunny.js played a huge role in developing this client, so the author of that was listed as a contributer.
+    and [iFunny.js](https://github.com/gastrodon/iFunny.js). iFunny.js played a huge role in developing this client, so the author of that was listed as a contributor.
 
-## Using the module
+# How do I use the module?
 
-The module was written in ES6, so you'll need to specify the type as `module` in `package.json` or change the extensions to `.mjs` instead of `.js`\
-To use the Client, you'll simply use `npm install ifunnynode` in your terminal
+To install, type `npm install ifunnynode` in your terminal or `sudo npm install ifunnynode` if you're on linux
 
-## Logging in
+```js
+// ES6
+import Client from "ifunnynode";
+const client = new Client();
+
+// Login event
+client.on("login", (logged_in) => {
+	console.log(logged_in ? "Made login request" : "Used stored bearer");
+	client.chats.connect();
+});
+
+client.chats.on("message", async (ctx) => {
+	console.log(ctx.message.content);
+});
+
+client.login({ token: "token" });
+```
+
+```js
+// CommonJS
+const Client = require("ifunnynode").default;
+const client = new Client();
+
+// Login event
+client.on("login", (logged_in) => {
+	console.log(logged_in ? "Made login request" : "Used stored bearer");
+	client.chats.connect();
+});
+
+// Message event
+client.chats.on("message", async (ctx) => {
+	console.log(ctx.message.content);
+});
+
+client.login({ token: "token" });
+```
+
+```ts
+// Typescript
+import Client from "ifunnynode";
+import type { Context } from "ifunnynode"; // Should have full TypeScript support, excluding events (will be worked on)
+const client: Client = new Client();
+
+// Login event
+client.on("login", (logged_in: boolean) => {
+	console.log(logged_in ? "Made login request" : "Used stored bearer");
+	client.chats.connect();
+});
+
+// Message event
+client.chats.on("message", async (ctx: Context) => {
+	console.log(ctx.message.content);
+});
+
+client.login({ token: "token" });
+```
+
+# Logging in
 
 Logging in for the first time isn't as simple as it used to be due to iFunny updating their API\
 iFunny will sometimes return a captcha error, so you'll need to solve them
@@ -27,7 +83,21 @@ iFunny will sometimes return a captcha error, so you'll need to solve them
     2. Attempt to login in again with the same credentials
 3. You're done!
 
-### Example
+## How do I get a basic token?
+
+```js
+// CommonJS
+const Client = require("ifunnynode").default;
+const client = new Client();
+console.log(client.basic_token); // Store this yourself
+```
+
+```js
+// ES6 or TypeScript
+import Client from "ifunnynode";
+const client = new Client();
+console.log(client.basic_token); // Store this yourself
+```
 
 ```js
 import Client from "ifunnynode";
@@ -35,16 +105,17 @@ import Client from "ifunnynode";
 // Get your credentials
 const EMAIL = process.env.IFUNNY_NODE_EMAIL;
 const PASSWORD = process.env.IFUNNY_NODE_PASSWORD;
-const BASIC_TOKEN = process.env.IFUNNY_BASIC_TOKEN ?? new Client().basic_token; // If you don't have a basic token stored, generate one like so
+const BASIC_TOKEN = process.env.IFUNNY_BASIC_TOKEN ?? new Client().basic_token; // Generates a new basic token.
 
 /**
  * The wrapper doesn't store the basic token,
  * which needs to be reused to login,
- * so you'll wanna store this before attempting a login
+ * so you'll wanna store this before attempting a login.
+ * You can avoid having to store the basic token if you use a service like 2captcha to solve captchas programatically.
  */
 process.env.IFUNNY_BASIC_TOKEN = BASIC_TOKEN;
 
-// It's a good idea to use the same basic token unless you need to switch, for captcha requests
+// It's a good idea to use the same basic token for captcha requests, but you aren't required to pass in a basic token.
 const client = new Client({
 	basic: BASIC_TOKEN,
 });
