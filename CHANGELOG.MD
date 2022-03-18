@@ -250,3 +250,4 @@ The library is now using babel to publish the package to NPM, as well as Typescr
 ### 3.0.9
 
 -   Added `opts.token` to `Client.login()` so that you don't need to pass the bearer token into the constructor
+-   Added some basic example usage to `./examples/`
