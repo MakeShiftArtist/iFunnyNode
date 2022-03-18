@@ -447,6 +447,7 @@ export default class Client extends Events {
 	/**
 	 * Logs the Client in
 	 * @param {Object} [opts] Optional params for logging in
+	 * @param {string} [opts.token] Optional bearer token to "Login" with. Changes cached bearer
 	 * @param {string} [opts.email] Email of the Client to log in with
 	 * @param {string} [opts.password] Password to log in with, required if no bearer is stored
 	 * @param {boolean} [opts.force=false] Force log in with email and password
@@ -454,9 +455,17 @@ export default class Client extends Events {
 	 * @throws {@link CaptchaError}
 	 * @fires Client#login
 	 */
-	async login(opts = { force: false }) {
+	async login(opts = {}) {
 		// Use stored bearer
 		if (this.bearer && !opts.force) {
+			await this.update_payload();
+			this.authorized = true;
+			this.emit("login", false);
+			return this;
+		}
+
+		if (opts.token) {
+			this.bearer = opts.token;
 			await this.update_payload();
 			this.authorized = true;
 			this.emit("login", false);
