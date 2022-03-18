@@ -395,6 +395,9 @@ export default class Client extends Events {
 		this._basic = auth;
 		this._update = false;
 		this.prime_basic();
+		if (!this.bearer) {
+			this.instance.defaults.headers["Authorization"] = `Basic ${this._basic}`;
+		}
 		return auth;
 	}
 
