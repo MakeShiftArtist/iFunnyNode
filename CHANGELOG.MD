@@ -246,3 +246,7 @@ The library is now using babel to publish the package to NPM, as well as Typescr
 -   Added `primed` param to `ClientOpts`
 -   `Client.basic_token` will prime the token in the background when generating new tokens
 -   Unprivated `Client._update_payload()` and changed name to `Client.update_payload()`
+
+### 3.0.9
+
+-   Added `opts.token` to `Client.login()` so that you don't need to pass the bearer token into the constructor
