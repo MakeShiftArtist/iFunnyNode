@@ -8,6 +8,7 @@ import {
 	meme_xp,
 	create_basic_token,
 } from "../utils/methods.js";
+
 import { ApiError, CaptchaError, AuthError } from "../utils/exceptions.js";
 import Ban from "./small/Ban.js";
 import axios from "axios";
@@ -26,6 +27,7 @@ import FormData from "form-data";
  * @property {string} [prefix] Prefix for the bot commands
  * @property {string} [token] Bearer token for the bot to use if you have one stored
  * @property {string} [basic] Basic token for the bot to use if you have one stored
+ * @property {boolean} [primed] Has the basic token been primed for use?
  * @property {Object} [config] Config for the bot to use
  * @property {string} [client_id] Client installation id for basic token generation
  * @property {string} [client_secret] Client installation secret for basic token generation
@@ -112,13 +114,58 @@ export default class Client extends Events {
 		 */
 		this.user_agent =
 			opts.user_agent ||
-			"iFunny/7.19.1(1120248) Android/12 (samsung; SM-G996U; samsung)";
+			"iFunny/7.21.2(1129846) Android/12 (samsung; SM-G996U; samsung)";
 
 		/**
 		 * Prefix for the bot
 		 * @type {string|null}
 		 */
 		this.prefix = opts.prefix || null;
+
+		if (opts.basic !== null || opts.basic !== undefined) {
+			const basic_regex = /^[a-zA-Z0-9]{155}\=$/;
+			if (typeof opts.basic !== "string") {
+				throw new TypeError(`basic must be a string, not ${typeof opts.basic}`);
+			}
+
+			if (!basic_regex.test(opts.basic)) {
+				throw new Error(`Invalid basic token: ${opts.basic}`);
+			}
+		}
+
+		/**
+		 * Basic token if stored in cache
+		 * @type {string|null}
+		 * @protected
+		 */
+		this._basic = opts.basic || null;
+
+		/**
+		 * Is the basic token primed?
+		 * @type {boolean}
+		 * @protected
+		 */
+		this._basic_is_primed = opts.primed ?? false;
+
+		// Checks opts.token to see if it's a valid bearer token
+		if (opts.token) {
+			const bearer_regex = /^[a-z0-9]{64}$/;
+			if (typeof opts.token !== "string") {
+				throw new TypeError(`Token must be a string, not ${typeof opts.token}`);
+			}
+
+			if (!bearer_regex.test(opts.token)) {
+				throw new Error(`Invalid bearer token: ${opts.token}`);
+			}
+			this.authorized = true; // Assumes valid bearer token
+		}
+
+		/**
+		 * Bearer token if stored in cache
+		 * @type {string|null}
+		 * @protected
+		 */
+		this._token = opts.token || null;
 
 		/**
 		 * Instance of axios with headers
@@ -131,6 +178,9 @@ export default class Client extends Events {
 				"Ifunny-Project-Id": "iFunny",
 				"User-Agent": this.user_agent,
 				applicationstate: 1,
+				authorization: this._token
+					? `Bearer ${this._token}`
+					: `Basic ${this.basic_token}`,
 				accept: "application/json,image/jpeg,image/webp,video/mp4",
 				"accept-language": "en-US",
 				"accept-encoding": "gzip",
@@ -161,32 +211,6 @@ export default class Client extends Events {
 				} else return Promise.reject(error);
 			}
 		);
-
-		// Checks opts.token to see if it's a valid bearer token
-		if (opts.token) {
-			if (typeof opts.token !== "string") {
-				throw new TypeError(`Token must be a string, not ${typeof opts.token}`);
-			}
-			if (!opts.token.match(/^[a-z0-9]{64}$/g) || opts.token.length !== 64) {
-				throw new Error(`Invalid bearer token: ${opts.token}`);
-			}
-			this.instance.defaults.headers["Authorization"] = `Bearer ${opts.token}`;
-			this.authorized = true; // Assumes valid bearer token
-		}
-
-		/**
-		 * Bearer token if stored in cache
-		 * @type {string|null}
-		 * @protected
-		 */
-		this._token = opts.token ?? null;
-
-		/**
-		 * Basic token if stored in cache
-		 * @type {string|null}
-		 * @protected
-		 */
-		this._basic = opts.basic ?? null;
 
 		/**
 		 * Config for whatever you need to store within the client
@@ -252,9 +276,17 @@ export default class Client extends Events {
 
 		this._update = false;
 
-		await this._update_payload();
+		await this.update_payload();
 
 		return this._payload[key] ?? fallback;
+	}
+
+	/**
+	 * Gets the full payload object for the client for easy data reading\
+	 * @type {Object}
+	 */
+	get payload() {
+		return this._payload ?? {};
 	}
 
 	/**
@@ -357,22 +389,37 @@ export default class Client extends Events {
 		if (this._basic && !this._update) {
 			return this._basic;
 		}
+		this._basic_is_primed = false;
 		// Generate the token
 		let auth = create_basic_token(this._client_id, this._client_secret);
 		this._basic = auth;
 		this._update = false;
+		this.prime_basic();
 		return auth;
+	}
+
+	/**
+	 * Primes the basic token by making a request with it, then waits 10 seconds
+	 */
+	async prime_basic() {
+		if (this._basic_is_primed) return;
+
+		await this.instance.request({
+			url: "counters",
+			headers: { authorization: `Basic ${this.basic_token}` },
+		});
+		this._basic_is_primed = true;
+		await sleep(10);
 	}
 
 	/**
 	 * Update's the Client's account payload for getters.\
 	 * Can await this if you want to see the full object details
-	 * @private
 	 * @returns {Promise<Object>} The Client's payload
 	 * @throws {@link ApiError}
 	 * @throws `Error`
 	 */
-	async _update_payload() {
+	async update_payload() {
 		if (!this.authorized || !this.bearer) {
 			throw new Error(`Client not authorized\nToken: ${this.bearer}`);
 		}
@@ -410,7 +457,7 @@ export default class Client extends Events {
 	async login(opts = { force: false }) {
 		// Use stored bearer
 		if (this.bearer && !opts.force) {
-			await this._update_payload();
+			await this.update_payload();
 			this.authorized = true;
 			this.emit("login", false);
 			return this;
@@ -436,19 +483,23 @@ export default class Client extends Events {
 			.join("&");
 
 		try {
+			let auth = `Basic ${this.basic_token}`;
+			await this.prime_basic();
 			let response = await this.instance.request({
 				method: "POST",
 				url: `/oauth2/token`,
 				headers: {
 					"content-type": "application/x-www-form-urlencoded",
+					connection: "Keep-Alive",
+					Authorization: auth,
 				},
-				data: data,
+				data,
 			});
 
 			if (!response?.data?.access_token) {
 				throw new Error("access_token not given");
 			}
-			// uses sette function
+			// uses setter function
 			this.bearer = response.data.access_token;
 		} catch (error) {
 			if (error.response.data.error === "captcha_required") {
@@ -458,7 +509,7 @@ export default class Client extends Events {
 			} else throw error;
 		}
 
-		await this._update_payload();
+		await this.update_payload();
 		this.emit("login", true);
 		return this;
 	}
@@ -1045,12 +1096,12 @@ export default class Client extends Events {
 	 * @param {number} limit Number of posts per api call
 	 * @param {boolean} is_new Honestly not sure what this does
 	 */
-	async *features(limit = 30, is_new = false) {
+	async *features(limit = 30, is_new = false, content_id = null) {
 		let url = `/feeds/featured`;
 		let feat_posts = paginator(this, {
 			url,
 			key: "content",
-			params: { limit, is_new },
+			params: { limit, is_new, content_id },
 		});
 
 		for await (let post of feat_posts) {
@@ -1133,8 +1184,8 @@ export default class Client extends Events {
 		if (opts.birth_date) {
 			let date;
 			if (typeof opts.birth_date === "string") {
-				let bday_regex = /\d{4}-\d{2}-\d{2}/i;
-				if (!bday_regex.test(opts.birth_date)) {
+				const BDAY_REGEX = /\d{4}-\d{2}-\d{2}/i;
+				if (!BDAY_REGEX.test(opts.birth_date)) {
 					throw new Error("Birthdate must be in yyyy-mm-dd format");
 				}
 				date = opts.birth_date;
