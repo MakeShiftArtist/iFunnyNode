@@ -6,3 +6,4 @@ config.json
 api_test.js
 .github/*
 src/*
+examples/*
