@@ -251,3 +251,7 @@ The library is now using babel to publish the package to NPM, as well as Typescr
 
 -   Added `opts.token` to `Client.login()` so that you don't need to pass the bearer token into the constructor
 -   Added some basic example usage to `./examples/`
+
+### 3.0.10
+
+-   `Client.basic_token` will now change the instance headers if the bearer token does not exist
