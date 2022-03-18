@@ -237,3 +237,12 @@ The library is now using babel to publish the package to NPM, as well as Typescr
 ### 3.0.7
 
 -   Updated `README.md` to reflect the latest version
+
+### 3.0.8
+
+-   Fixed login not using the basic token in the headers
+-   Added `Client.prime_basic()` method which mimics the way iFunny primes basic tokens
+-   Added `Client._basic_is_primed` property to avoid priming tokens more than once.
+-   Added `primed` param to `ClientOpts`
+-   `Client.basic_token` will prime the token in the background when generating new tokens
+-   Unprivated `Client._update_payload()` and changed name to `Client.update_payload()`
