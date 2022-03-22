@@ -255,3 +255,7 @@ The library is now using babel to publish the package to NPM, as well as Typescr
 ### 3.0.10
 
 -   `Client.basic_token` will now change the instance headers if the bearer token does not exist
+
+### 3.0.11
+
+-   Removed `capitalize` method from `methods.js` (why was that even added?)
