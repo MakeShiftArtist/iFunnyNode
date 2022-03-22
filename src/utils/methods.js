@@ -1,6 +1,4 @@
 // @ts-check
-import VideoPost from "../objects/small/VideoPost.js";
-import ImagePost from "../objects/small/ImagePost.js";
 
 import crypto from "crypto";
 import url from "url";
@@ -9,17 +7,6 @@ import url from "url";
  * @typedef {import('../objects/Client.js').default} Client
  * @typedef {import('../utils/types').MemeExperience} MemeExperience
  */
-
-/**
- * Capitalizes the first character of a string and makes the rest lowercase
- * @param {string} string
- * @returns {string} The capitalized version of the string
- * @example
- * capitalize("hElLO WoRld") // Hello world
- */
-export function capitalize(string) {
-	return string[0].toUpperCase() + string.slice(1).toLowerCase();
-}
 
 /**
  * Asynchronously waits for a specified amount of time (in seconds)
@@ -100,6 +87,10 @@ export async function* paginator(client, opts) {
  * Paginates data using `POST` method and body for `next` and `limit` key
  * @param {Client} client Client to make requests with
  * @param {Object} opts
+ * @param {string} opts.url Url to paginate with
+ * @param {string} opts.key Key for the items[] array
+ * @param {number} [opts.limit] Items to return per reuest
+ * @param {Object|url.URLSearchParams} [opts.body] Body data for the requests
  */
 export async function* post_body_paginator(client, opts) {
 	// Check required opts
@@ -142,7 +133,7 @@ export async function* post_body_paginator(client, opts) {
 }
 
 /**
- * Reduces badge data into it's own object
+ * Reduces badge data into it's own object inside the meme_experience object
  * @param {Object} experience Meme experience to format
  * @returns {MemeExperience}
  */
@@ -162,7 +153,6 @@ export function meme_xp(experience) {
 }
 
 export default {
-	capitalize,
 	sleep,
 	create_basic_token,
 	paginator,
