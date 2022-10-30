@@ -1,3 +1,5 @@
+# This project is ARCHIVED! Use [iFunny.ts](https://github.com/ifunny-co/iFunny.ts) instead. It's much MUCH better.
+
 # iFunnyNode 3.0.7
 
 This is an iFunny API Wrapper written in ES6 Node JS.\
